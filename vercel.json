@@ -7,7 +7,6 @@
   "functions": {
     "web/app.py": {
       "runtime": "python3.11",
-      "memory": 3008,
       "maxDuration": 60
     }
   },
