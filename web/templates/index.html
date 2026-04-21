@@ -1,0 +1,3732 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MotoRoute — Motorcycle Route Planner</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%23f97316;stop-opacity:1' /><stop offset='100%' style='stop-color:%23fb923c;stop-opacity:1' /></linearGradient><filter id='shadow'><feDropShadow dx='0' dy='1' stdDeviation='1.5' flood-opacity='0.3' /></filter></defs><rect width='32' height='32' fill='url(%23grad)' rx='6' filter='url(%23shadow)'/><text x='16' y='24' font-size='24' text-anchor='middle' font-family='system-ui' font-weight='bold'>🏍</text></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0f14;
+        --surface: #151820;
+        --surface2: #1c2030;
+        --surface3: #232b3f;
+        --border: #252a3a;
+        --border-light: #2a3045;
+        --accent: #f97316;
+        --accent2: #fb923c;
+        --accent-light: #fdba74;
+        --green: #22c55e;
+        --green-light: #86efac;
+        --blue: #3b82f6;
+        --blue-light: #60a5fa;
+        --red: #ef4444;
+        --red-light: #fca5a5;
+        --text: #e2e8f0;
+        --text-secondary: #cbd5e1;
+        --muted: #64748b;
+        --muted-light: #94a3b8;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 8px 12px rgba(0, 0, 0, 0.4);
+        --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.5);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family: "Syne", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow: hidden;
+      }
+      body.dragging * {
+        pointer-events: none !important;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      header {
+        height: 54px;
+        flex-shrink: 0;
+        background: linear-gradient(
+          135deg,
+          var(--surface) 0%,
+          var(--surface2) 100%
+        );
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 12px;
+        z-index: 1000;
+        box-shadow: var(--shadow-md);
+      }
+      .main {
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        min-height: 0;
+      }
+      .sidebar {
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+        height: 100%;
+        background: linear-gradient(
+          180deg,
+          var(--surface) 0%,
+          var(--surface2) 100%
+        );
+        border-right: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-shadow: var(--shadow-md);
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+      .map-wrap {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+        height: 100%;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+      .logo-icon:hover {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.5);
+      }
+      .logo-text {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(
+          135deg,
+          var(--text) 0%,
+          var(--text-secondary) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .logo-text span {
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .scroll-fade {
+        animation: fadeIn 0.5s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .sidebar-section {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        animation: slideIn 0.3s ease-out;
+      }
+      .section-label {
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        color: var(--muted-light);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        font-weight: 700;
+        background: linear-gradient(
+          90deg,
+          var(--muted) 0%,
+          var(--muted-light) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .instructions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .step-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        flex-shrink: 0;
+        color: var(--accent);
+      }
+      .point-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        border-radius: 12px;
+        margin-bottom: 6px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .point-row::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+      .point-row:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 16px rgba(249, 115, 22, 0.2);
+        transform: translateX(2px);
+      }
+      .point-row:hover::before {
+        left: 100%;
+      }
+      .point-row.active {
+        border-color: var(--accent);
+        background: linear-gradient(
+          135deg,
+          rgba(249, 115, 22, 0.1) 0%,
+          rgba(249, 115, 22, 0.05) 100%
+        );
+        box-shadow: inset 0 0 12px rgba(249, 115, 22, 0.15);
+      }
+      .point-row:last-child {
+        margin-bottom: 0;
+      }
+      .point-marker {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 11px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transition: transform 0.3s ease;
+      }
+      .point-marker:hover {
+        transform: scale(1.15);
+      }
+      .point-marker.origin {
+        background: linear-gradient(
+          135deg,
+          var(--green) 0%,
+          var(--green-light) 100%
+        );
+        color: #000;
+      }
+      .point-marker.dest {
+        background: linear-gradient(
+          135deg,
+          var(--red) 0%,
+          var(--red-light) 100%
+        );
+        color: #fff;
+      }
+      .point-marker.waypoint {
+        background: linear-gradient(
+          135deg,
+          var(--blue) 0%,
+          var(--blue-light) 100%
+        );
+        color: #fff;
+      }
+      .point-coords {
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        color: var(--muted);
+        line-height: 1.5;
+        flex: 1;
+      }
+      .point-label {
+        font-size: 11px;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-weight: 600;
+      }
+      .point-remove {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+        border: 1.5px solid var(--red);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+      }
+      .point-remove:hover {
+        background: var(--red);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        transform: scale(1.1);
+      }
+      .point-remove:active {
+        transform: scale(0.95);
+      }
+      .waypoint-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .waypoint-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 10px;
+      }
+      .waypoint-item .point-marker {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+        flex-shrink: 0;
+      }
+      .waypoint-coords {
+        flex: 1;
+        font-family: "Space Mono", monospace;
+        color: var(--muted);
+      }
+      .waypoint-remove {
+        padding: 4px 8px;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 9px;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .waypoint-remove:hover {
+        background: #dc2626;
+      }
+      .add-waypoint-btn {
+        width: 100%;
+        padding: 8px;
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        color: var(--blue-light);
+        border: 2px solid var(--blue);
+        border-radius: 10px;
+        font-family: "Syne", sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      .add-waypoint-btn:hover:not(:disabled) {
+        background: linear-gradient(
+          135deg,
+          var(--blue),
+          rgba(59, 130, 246, 0.1)
+        );
+        border-color: var(--blue-light);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+      }
+      .add-waypoint-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .recent-routes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .recent-route-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .recent-route-item:hover {
+        border-color: var(--accent);
+        background: linear-gradient(
+          135deg,
+          rgba(249, 115, 22, 0.1) 0%,
+          rgba(249, 115, 22, 0.05) 100%
+        );
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+        transform: translateX(4px);
+      }
+      .recent-route-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .recent-route-points {
+        font-family: "Space Mono", monospace;
+        color: var(--muted);
+        font-size: 9px;
+      }
+      .recent-route-stats {
+        display: flex;
+        gap: 8px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .recent-route-time {
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .algo-toggle {
+        display: flex;
+        gap: 6px;
+      }
+      .algo-btn {
+        flex: 1;
+        padding: 7px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        font-family: "Syne", sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+      }
+      .algo-btn.selected {
+        background: var(--accent);
+        color: #000;
+        border-color: var(--accent);
+      }
+      .calc-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        color: #000;
+        border: none;
+        border-radius: 12px;
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .calc-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: left 0.5s;
+      }
+      .calc-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+      }
+      .calc-btn:hover:not(:disabled)::before {
+        left: 100%;
+      }
+      .calc-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      .calc-btn:disabled {
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        color: var(--muted);
+        cursor: not-allowed;
+        box-shadow: none;
+        opacity: 0.6;
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(0, 0, 0, 0.3);
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 16px rgba(249, 115, 22, 0.15);
+        transform: translateY(-2px);
+      }
+      .stat-card.full {
+        grid-column: 1 / -1;
+      }
+      .stat-val {
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 3px;
+        background: linear-gradient(
+          135deg,
+          var(--text) 0%,
+          var(--text-secondary) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .stat-val.accent {
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .stat-val.green {
+        background: linear-gradient(
+          135deg,
+          var(--green) 0%,
+          var(--green-light) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .stat-key {
+        font-size: 9px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+      }
+      .comparison {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .comp-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .comp-row:last-child {
+        border-bottom: none;
+      }
+      .comp-label {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .comp-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .comp-dot.moto {
+        background: var(--accent);
+      }
+      .comp-dot.gm {
+        background: var(--muted);
+      }
+      .comp-val {
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .comp-val.better {
+        color: var(--green);
+      }
+      .comp-val.worse {
+        color: var(--red);
+      }
+      .datasource-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .datasource-card:last-child {
+        margin-bottom: 0;
+      }
+      .ds-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .ds-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--muted);
+        flex-shrink: 0;
+      }
+      .ds-dot.active {
+        background: var(--green);
+      }
+      .ds-dot.inactive {
+        background: var(--red);
+      }
+      .ds-title {
+        font-size: 11px;
+        font-weight: 700;
+        flex: 1;
+      }
+      .ds-badge {
+        font-family: "Space Mono", monospace;
+        font-size: 8px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: var(--border);
+        color: var(--muted);
+      }
+      .ds-badge.active {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+      }
+      .ds-badge.inactive {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+      .ds-body {
+        padding: 6px 12px;
+      }
+      .ds-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid var(--border);
+        gap: 8px;
+      }
+      .ds-row:last-child {
+        border-bottom: none;
+      }
+      .ds-key {
+        font-size: 9px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        flex-shrink: 0;
+      }
+      .ds-val {
+        font-size: 9px;
+        color: var(--text);
+        text-align: right;
+        font-family: "Space Mono", monospace;
+      }
+      .legend {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .legend-line {
+        width: 28px;
+        height: 3px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      .legend-line.route {
+        background: var(--blue);
+      }
+      .legend-line.ls {
+        background: var(--accent);
+      }
+      .error-msg {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        color: #fca5a5;
+        display: none;
+        margin-top: 8px;
+      }
+      .net-info {
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        color: var(--muted);
+        text-align: center;
+        padding: 10px 16px;
+      }
+      .click-banner {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface);
+        border: 1px solid var(--accent);
+        border-radius: 24px;
+        padding: 12px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        z-index: 1500;
+        display: none;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .click-banner.hidden {
+        display: none;
+      }
+      .sidebar-toggle {
+        display: none;
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+      .sidebar-toggle:hover {
+        background: var(--accent2);
+      }
+
+      .info-btn {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: background 0.2s;
+      }
+
+      .info-btn:hover {
+        background: var(--surface2);
+      }
+
+      .info-btn-mobile {
+        display: none;
+      }
+
+      .info-btn-desktop {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        background: var(--surface2);
+        border: 1px solid var(--border-light);
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 999;
+        transition: all 0.2s;
+        color: var(--text);
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .info-btn-desktop:hover {
+        background: var(--accent);
+        color: white;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Desktop: show floating button */
+      @media (min-width: 769px) {
+        .info-btn-desktop {
+          display: flex;
+        }
+      }
+
+      /* Instructions Modal */
+      .instructions-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .instructions-modal.active {
+        display: flex;
+      }
+
+      .instructions-modal-content {
+        background: linear-gradient(
+          180deg,
+          var(--surface) 0%,
+          var(--surface2) 100%
+        );
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 350px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        animation: slideIn 0.3s ease;
+      }
+
+      .instructions-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .instructions-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--text);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+      }
+
+      .close-modal:hover {
+        color: var(--text);
+      }
+
+      .instructions-modal .instructions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .instructions-modal .step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: var(--surface2);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+
+      .instructions-modal .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        flex-shrink: 0;
+        color: #000;
+        font-weight: 700;
+      }
+
+      .instructions-modal .step span {
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+        padding-top: 4px;
+      }
+
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+      }
+
+      /* Bottom Panel Styles - Mobile */
+      .bottom-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3);
+        z-index: 2000;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease;
+      }
+
+      .bottom-panel.collapsed {
+        transform: translateY(calc(100% - 120px));
+      }
+
+      .panel-handle {
+        padding: 12px 0;
+        display: flex;
+        justify-content: center;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .handle-bar {
+        width: 40px;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 16px 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .zoom-controls {
+        position: fixed;
+        bottom: 160px;
+        right: 16px;
+        z-index: 1500;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .zoom-btn {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--surface) 0%,
+          var(--surface2) 100%
+        );
+        border: 1.5px solid var(--border-light);
+        border-radius: 10px;
+        box-shadow: var(--shadow-lg);
+        font-size: 20px;
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .zoom-btn:hover {
+        border-color: var(--accent);
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+        transform: scale(1.1);
+      }
+
+      .zoom-btn:active {
+        background: var(--surface2);
+        transform: scale(0.95);
+      }
+
+      .locations-bar {
+        display: none;
+        position: fixed;
+        top: 48px;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        z-index: 997;
+        padding: 8px 12px;
+      }
+
+      .locations-container {
+        padding: 8px 12px;
+      }
+
+      #add-waypoint-btn-mobile {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      #add-waypoint-btn-mobile:hover:not(:disabled) {
+        background: var(--accent);
+        color: var(--bg);
+      }
+
+      #add-waypoint-btn-mobile:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      #calc-btn-mobile {
+        background: var(--accent);
+        border: 1px solid var(--accent);
+        color: var(--bg);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      #calc-btn-mobile:hover:not(:disabled) {
+        background: var(--accent2);
+      }
+
+      #calc-btn-mobile:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .locations-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--text);
+        margin-bottom: 10px;
+      }
+
+      .close-locations-mobile {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0;
+      }
+
+      .point-row.compact {
+        padding: 8px;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .waypoints-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .waypoints-bar .waypoint-item {
+        margin: 0;
+      }
+
+      .desktop-only {
+        display: block;
+      }
+
+      /* Animation Controls */
+      .animation-controls {
+        display: none;
+        background: linear-gradient(
+          180deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 12px;
+        gap: 10px;
+        flex-direction: column;
+      }
+
+      .animation-controls.active {
+        display: flex;
+      }
+
+      .animation-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .animation-playback {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .play-btn,
+      .pause-btn,
+      .restart-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--border);
+        background: var(--surface3);
+        color: var(--text);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .play-btn:hover,
+      .pause-btn:hover,
+      .restart-btn:hover {
+        background: var(--accent);
+        color: #000;
+        border-color: var(--accent);
+      }
+
+      .play-btn:disabled,
+      .pause-btn:disabled,
+      .restart-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .reset-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--border);
+        background: var(--surface3);
+        color: var(--text);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+
+      .reset-btn:hover {
+        border-color: var(--red);
+        color: var(--red);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .reset-btn:active {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .speed-buttons {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .speed-btn {
+        flex: 1;
+        min-width: 40px;
+        padding: 5px 6px;
+        border: 1px solid var(--border);
+        background: var(--surface3);
+        color: var(--text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-family: "Space Mono", monospace;
+      }
+
+      .speed-btn:hover {
+        border-color: var(--accent);
+        background: var(--surface3);
+      }
+
+      .speed-btn.active {
+        background: var(--accent);
+        color: #000;
+        border-color: var(--accent);
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+      }
+
+      .motorcycle-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: var(--surface3);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        margin-top: 10px;
+      }
+
+      .status-icon {
+        font-size: 18px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .status-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .status-label {
+        font-size: 9px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+      }
+
+      .status-value {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      .status-value.lane-split {
+        color: #f97316;
+      }
+
+      .status-value.normal {
+        color: #3b82f6;
+      }
+
+      .status-value.complete {
+        color: #22c55e;
+      }
+
+      .speed-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 10px;
+        background: var(--surface3);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .speed-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--accent);
+        font-family: "Space Mono", monospace;
+        line-height: 1;
+      }
+
+      .speed-label {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .speed-unit {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        font-weight: 600;
+      }
+
+      .progress-container {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        width: 0%;
+        transition: width 0.1s linear;
+      }
+
+      .progress-time {
+        font-size: 9px;
+        color: var(--muted-light);
+        font-family: "Space Mono", monospace;
+        min-width: 45px;
+      }
+
+      /* Developers/Credits Section */
+      .developers-section {
+        background: linear-gradient(
+          135deg,
+          var(--surface2) 0%,
+          var(--surface3) 100%
+        );
+        border-top: 1px solid var(--border-light);
+        padding: 12px 16px;
+        margin-top: auto;
+        flex-shrink: 0;
+      }
+
+      .developers-title {
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        color: var(--muted-light);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+
+      .dev-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .dev-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+      }
+
+      .dev-badge {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: #000;
+        flex-shrink: 0;
+      }
+
+      .dev-name {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .dev-role {
+        color: var(--muted);
+        font-size: 9px;
+      }
+
+      /* Mobile responsive styles */
+      @media (max-width: 768px) {
+        .info-btn-mobile {
+          display: block;
+          margin-left: auto;
+          position: static;
+          width: auto;
+          height: auto;
+          padding: 6px 10px;
+          background: none;
+          border: none;
+          border-radius: 6px;
+          box-shadow: none;
+          z-index: auto;
+        }
+
+        .info-btn-mobile:hover {
+          background: var(--surface2);
+          color: var(--text);
+          transform: none;
+          box-shadow: none;
+        }
+
+        .info-btn-desktop {
+          display: none !important;
+        }
+
+        .sidebar-content > .sidebar-section:first-child {
+          display: none !important;
+        }
+
+        .sidebar-content {
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Move calc button section to top */
+        .sidebar-content > .sidebar-section:nth-child(4) {
+          order: -10;
+        }
+
+        .animation-controls {
+          display: none;
+          background: linear-gradient(
+            180deg,
+            var(--surface2) 0%,
+            var(--surface3) 100%
+          );
+          border: 1px solid var(--border-light);
+          border-radius: 12px;
+          padding: 12px;
+          gap: 10px;
+          flex-direction: column;
+        }
+
+        .animation-playback {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .speed-control {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+          font-size: 8px;
+          color: var(--muted);
+          flex: 1;
+          min-width: 80px;
+        }
+
+        .speed-buttons {
+          display: flex;
+          gap: 3px;
+          flex-wrap: wrap;
+        }
+
+        .speed-btn {
+          flex: 1;
+          min-width: 35px;
+          padding: 4px 4px;
+          font-size: 9px;
+        }
+
+        .motorcycle-status {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px;
+          background: var(--surface3);
+          border: 1px solid var(--border-light);
+          border-radius: 8px;
+          margin-top: 6px;
+        }
+
+        .status-icon {
+          font-size: 16px;
+        }
+
+        .status-text {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+
+        .status-label {
+          font-size: 8px;
+        }
+
+        .status-value {
+          font-size: 10px;
+        }
+
+        .speed-display {
+          padding: 8px;
+          margin-top: 6px;
+        }
+
+        .speed-value {
+          font-size: 20px;
+        }
+
+        .speed-label {
+          font-size: 9px;
+        }
+
+        .speed-unit {
+          font-size: 9px;
+        }
+
+        .animation-header {
+          font-size: 10px;
+          margin-bottom: 2px;
+        }
+
+        .play-btn,
+        .pause-btn,
+        .restart-btn {
+          width: 26px;
+          height: 26px;
+          font-size: 12px;
+          padding: 2px;
+        }
+
+        .speed-display {
+          min-width: 25px;
+          font-size: 10px;
+        }
+
+        .progress-time {
+          font-size: 8px;
+          min-width: 40px;
+        }
+
+        .progress-bar {
+          height: 4px;
+        }
+
+        header {
+          padding: 0 12px;
+          gap: 8px;
+          height: 54px;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 1000;
+          background: var(--surface);
+          border-bottom: 1px solid var(--border);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .logo-icon {
+          width: 28px;
+          height: 28px;
+          font-size: 16px;
+        }
+        .logo-text {
+          font-size: 16px;
+        }
+        .sidebar-toggle {
+          display: none;
+        }
+        .main {
+          flex-direction: column;
+          padding-top: 54px;
+        }
+        .sidebar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          top: auto;
+          width: 100%;
+          max-width: 100%;
+          min-width: auto;
+          height: auto;
+          max-height: 85vh;
+          background: linear-gradient(
+            180deg,
+            var(--surface) 0%,
+            var(--surface2) 100%
+          );
+          border-right: none;
+          border-bottom: none;
+          border-radius: 16px 16px 0 0;
+          z-index: 2000;
+          transform: none;
+          opacity: 1;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
+        }
+        .sidebar.collapsed {
+          transform: translateY(calc(100% - 120px));
+        }
+        .sidebar-handle {
+          padding: 12px 0;
+          display: flex;
+          justify-content: center;
+          cursor: grab;
+          touch-action: none;
+          flex-shrink: 0;
+          background: linear-gradient(
+            180deg,
+            var(--surface) 0%,
+            var(--surface2) 100%
+          );
+          border-bottom: 1px solid var(--border-light);
+          z-index: 10;
+          transition: background 0.3s ease;
+        }
+        .sidebar-handle:active {
+          cursor: grabbing;
+          background: linear-gradient(
+            180deg,
+            var(--surface2) 0%,
+            var(--surface3) 100%
+          );
+        }
+        .sidebar-content {
+          flex: 1;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          max-height: calc(85vh - 60px);
+        }
+        .sidebar.active {
+          display: flex;
+        }
+        .sidebar-overlay.active {
+          display: none;
+        }
+        .locations-bar {
+          display: none;
+        }
+        .desktop-only {
+          display: block;
+        }
+        .map-wrap {
+          width: 100%;
+          height: calc(100vh - 54px);
+          position: fixed;
+          top: 54px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+        }
+
+        #map {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 1;
+        }
+
+        .bottom-panel {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          max-height: 85vh;
+        }
+
+        .click-banner {
+          bottom: 140px;
+          background: linear-gradient(
+            135deg,
+            var(--surface) 0%,
+            var(--surface2) 100%
+          );
+          border: 1.5px solid var(--accent);
+          box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+          padding: 12px 20px;
+          font-size: 12px;
+          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+        .sidebar-section {
+          padding: 12px 14px;
+          border-bottom: 1px solid var(--border);
+        }
+        .section-label {
+          font-size: 8px;
+        }
+        .step {
+          font-size: 11px;
+        }
+        .step-num {
+          width: 20px;
+          height: 20px;
+          font-size: 10px;
+        }
+        .point-row {
+          padding: 6px 8px;
+          gap: 8px;
+        }
+        .point-marker {
+          width: 24px;
+          height: 24px;
+          font-size: 10px;
+        }
+        .point-coords {
+          font-size: 8px;
+        }
+        .point-label {
+          font-size: 10px;
+        }
+        .calc-btn {
+          padding: 10px;
+          font-size: 12px;
+          gap: 6px;
+        }
+
+        .reset-btn {
+          width: 36px;
+          height: 36px;
+          font-size: 16px;
+        }
+        .spinner {
+          width: 12px;
+          height: 12px;
+          border: 2px solid rgba(0, 0, 0, 0.3);
+        }
+        .stat-card {
+          padding: 8px;
+        }
+        .stat-val {
+          font-size: 16px;
+        }
+        .stat-key {
+          font-size: 8px;
+        }
+        .add-waypoint-btn {
+          padding: 6px;
+          font-size: 10px;
+        }
+        .waypoint-item {
+          padding: 6px;
+          gap: 6px;
+        }
+        .waypoint-coords {
+          font-size: 8px;
+        }
+        .waypoint-remove {
+          padding: 3px 6px;
+          font-size: 8px;
+        }
+        .point-remove {
+          width: 18px;
+          height: 18px;
+          font-size: 11px;
+        }
+        .recent-route-item {
+          padding: 6px;
+          gap: 6px;
+        }
+        .recent-route-points {
+          font-size: 8px;
+        }
+        .recent-route-stats {
+          font-size: 8px;
+          gap: 6px;
+        }
+        .recent-route-time {
+          font-size: 8px;
+        }
+        .click-banner {
+          bottom: 10px;
+          padding: 8px 14px;
+          font-size: 12px;
+        }
+        .legend-item {
+          font-size: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        header {
+          height: 54px;
+        }
+        .map-wrap {
+          height: calc(100vh - 54px);
+        }
+        .sidebar-content {
+          max-height: calc(85vh - 60px);
+        }
+        .point-row {
+          padding: 5px 6px;
+        }
+        .calc-btn {
+          padding: 9px;
+          font-size: 11px;
+        }
+        .stat-grid {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        .stat-card {
+          padding: 6px;
+        }
+      }
+
+      /* Desktop layout - unchanged */
+      @media (min-width: 769px) {
+        .info-btn-mobile {
+          display: none;
+        }
+
+        header {
+          position: static;
+        }
+        .main {
+          padding-top: 0;
+        }
+        .map-wrap {
+          position: static;
+          height: auto;
+        }
+        #map {
+          position: relative;
+          z-index: auto;
+        }
+        .sidebar {
+          position: static;
+          top: auto;
+          bottom: auto;
+          max-height: none;
+          height: auto;
+          border-right: 1px solid var(--border);
+          border-radius: 0;
+          box-shadow: none;
+          flex-direction: column;
+          overflow-y: auto;
+        }
+        .sidebar.collapsed {
+          transform: none;
+        }
+        .sidebar-handle {
+          display: none;
+        }
+        .zoom-controls {
+          display: none;
+        }
+        .bottom-panel {
+          display: none;
+        }
+        .panel-handle {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="logo">
+          <div class="logo-icon">🏍</div>
+          <div class="logo-text">Moto<span>Route</span></div>
+        </div>
+        <button
+          class="info-btn info-btn-mobile"
+          id="info-btn"
+          onclick="openInstructionsModal()"
+          title="Instructions"
+        >
+          ℹ
+        </button>
+        <button
+          class="sidebar-toggle"
+          id="sidebar-toggle"
+          onclick="toggleSidebar()"
+        >
+          ☰ Menu
+        </button>
+      </header>
+      <button
+        class="info-btn info-btn-desktop"
+        id="info-btn-desktop"
+        onclick="openInstructionsModal()"
+        title="Instructions"
+      >
+        ℹ
+      </button>
+      <div
+        class="sidebar-overlay"
+        id="sidebar-overlay"
+        onclick="closeSidebar()"
+      ></div>
+
+      <!-- Instructions Modal -->
+      <div class="instructions-modal" id="instructions-modal">
+        <div class="instructions-modal-content">
+          <div class="instructions-header">
+            <div class="instructions-title">📋 How to Use</div>
+            <button class="close-modal" onclick="closeInstructionsModal()">
+              ×
+            </button>
+          </div>
+          <div class="instructions">
+            <div class="step">
+              <div class="step-num">1</div>
+              <span>Click map to set <strong>Origin (A)</strong></span>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <span>Click map to set <strong>Destination (B)</strong></span>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <span>(Optional) Add <strong>Waypoints</strong></span>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <span>Click <strong>Calculate Motorcycle Route</strong></span>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <span
+                >Watch the <strong>animation</strong> to see the estimated
+                speed</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="sidebar-overlay"
+        id="sidebar-overlay"
+        onclick="closeSidebar()"
+      ></div>
+
+      <!-- Google Maps style locations bar for mobile -->
+      <div class="locations-bar" id="locations-bar">
+        <div class="locations-container">
+          <div
+            style="
+              display: flex;
+              gap: 12px;
+              flex-wrap: wrap;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <div
+              class="point-row compact"
+              id="origin-row"
+              onclick="setClickMode('origin')"
+            >
+              <div class="point-marker origin">A</div>
+              <div class="point-coords">
+                <div id="origin-coords">Click map to set</div>
+              </div>
+              <button
+                class="point-remove"
+                id="origin-remove"
+                onclick="removeOrigin(event)"
+                style="display: none"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              class="point-row compact"
+              id="dest-row"
+              onclick="setClickMode('dest')"
+            >
+              <div class="point-marker dest">B</div>
+              <div class="point-coords">
+                <div id="dest-coords">Click map to set</div>
+              </div>
+              <button
+                class="point-remove"
+                id="dest-remove"
+                onclick="removeDest(event)"
+                style="display: none"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              class="add-waypoint-btn"
+              id="add-waypoint-btn-mobile"
+              onclick="enableWaypointMode()"
+              style="padding: 4px 8px; font-size: 11px; flex-shrink: 0"
+            >
+              + W
+            </button>
+            <button
+              class="calc-btn"
+              id="calc-btn-mobile"
+              onclick="calculateRoute()"
+              disabled
+              style="
+                flex-shrink: 0;
+                padding: 4px 8px;
+                font-size: 11px;
+                margin-left: auto;
+              "
+            >
+              <span style="font-size: 14px">🏍</span>
+            </button>
+          </div>
+          <div id="waypoints-bar" class="waypoints-bar"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Panel for Mobile (Hidden - sidebar used instead) -->
+      <!-- <div class="bottom-panel" id="bottomPanel">
+        <div class="panel-handle" id="panelHandle">
+          <div class="handle-bar"></div>
+        </div>
+        <div class="panel-content">
+          <div class="error-msg" id="error-msg"></div>
+          <div id="map-panel-content"></div>
+        </div>
+      </div> -->
+
+      <!-- Zoom Controls -->
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="map.zoomIn()" title="Zoom In">
+          +
+        </button>
+        <button class="zoom-btn" onclick="map.zoomOut()" title="Zoom Out">
+          −
+        </button>
+        <button
+          class="zoom-btn"
+          onclick="map.setView([13.6218, 123.1948], 14)"
+          title="Reset View"
+        >
+          🎯
+        </button>
+      </div>
+
+      <div class="main">
+        <div class="sidebar collapsed" id="sidebar">
+          <div class="sidebar-handle" id="sidebarHandle">
+            <div class="handle-bar"></div>
+          </div>
+          <div class="sidebar-content">
+            <div class="sidebar-section" style="display: none">
+              <div class="section-label">How to Use</div>
+              <div class="instructions">
+                <div class="step">
+                  <div class="step-num">1</div>
+                  <span>Click map to set <strong>Origin (A)</strong></span>
+                </div>
+                <div class="step">
+                  <div class="step-num">2</div>
+                  <span>Click map to set <strong>Destination (B)</strong></span>
+                </div>
+                <div class="step">
+                  <div class="step-num">3</div>
+                  <span>(Optional) Add <strong>Waypoints</strong></span>
+                </div>
+                <div class="step">
+                  <div class="step-num">4</div>
+                  <span>Calculate route</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div class="section-label">Route Points</div>
+              <div
+                class="point-row"
+                id="origin-row-desktop"
+                onclick="setClickMode('origin')"
+              >
+                <div class="point-marker origin">A</div>
+                <div class="point-coords">
+                  <div class="point-label">Origin</div>
+                  <div id="origin-coords-desktop">Click map to set</div>
+                </div>
+                <button
+                  class="point-remove"
+                  id="origin-remove-desktop"
+                  onclick="removeOrigin(event)"
+                  style="display: none"
+                >
+                  ×
+                </button>
+              </div>
+              <div
+                class="point-row"
+                id="dest-row-desktop"
+                onclick="setClickMode('dest')"
+              >
+                <div class="point-marker dest">B</div>
+                <div class="point-coords">
+                  <div class="point-label">Destination</div>
+                  <div id="dest-coords-desktop">Click map to set</div>
+                </div>
+                <button
+                  class="point-remove"
+                  id="dest-remove-desktop"
+                  onclick="removeDest(event)"
+                  style="display: none"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div id="waypoints-container" style="display: none">
+                <div
+                  class="section-label"
+                  style="margin-top: 12px; margin-bottom: 8px"
+                >
+                  Waypoints
+                </div>
+                <div id="waypoint-list" class="waypoint-list"></div>
+                <button
+                  class="add-waypoint-btn"
+                  id="add-waypoint-btn"
+                  onclick="enableWaypointMode()"
+                >
+                  + Add Waypoint
+                </button>
+              </div>
+            </div>
+
+            <!-- Algorithm selection hidden -->
+            <div class="sidebar-section" style="display: none">
+              <div class="section-label">Algorithm</div>
+              <div class="algo-toggle">
+                <div
+                  class="algo-btn selected"
+                  onclick="selectAlgo('astar', this)"
+                >
+                  A* (Enhanced)
+                </div>
+                <div class="algo-btn" onclick="selectAlgo('dijkstra', this)">
+                  Dijkstra
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div style="display: flex; gap: 8px">
+                <button
+                  class="calc-btn"
+                  id="calc-btn"
+                  onclick="calculateRoute()"
+                  disabled
+                  style="flex: 1"
+                >
+                  <div class="spinner" id="spinner"></div>
+                  <span id="calc-label">🏍 Calculate Route</span>
+                </button>
+                <button
+                  class="reset-btn"
+                  id="reset-btn"
+                  onclick="resetRoute()"
+                  title="Clear route and start over"
+                >
+                  ↻
+                </button>
+              </div>
+              <div class="error-msg" id="error-msg"></div>
+            </div>
+
+            <div
+              class="sidebar-section"
+              id="animation-section"
+              style="display: none"
+            >
+              <div class="animation-controls" id="animation-controls">
+                <div class="animation-header">
+                  <span>🏍 Route Animation</span>
+                </div>
+                <div class="animation-playback">
+                  <button
+                    class="play-btn"
+                    id="play-pause-btn"
+                    onclick="togglePlayPause()"
+                    title="Play/Pause"
+                  >
+                    ▶
+                  </button>
+                  <button
+                    class="restart-btn"
+                    id="restart-btn"
+                    onclick="restartAnimation()"
+                    title="Restart"
+                  >
+                    ⟲
+                  </button>
+                </div>
+                <div class="speed-buttons">
+                  <button
+                    class="speed-btn active"
+                    onclick="setAnimationSpeed(1)"
+                    title="1x Speed"
+                  >
+                    1x
+                  </button>
+                  <button
+                    class="speed-btn"
+                    onclick="setAnimationSpeed(2)"
+                    title="2x Speed"
+                  >
+                    2x
+                  </button>
+                  <button
+                    class="speed-btn"
+                    onclick="setAnimationSpeed(3)"
+                    title="3x Speed"
+                  >
+                    3x
+                  </button>
+                  <button
+                    class="speed-btn"
+                    onclick="setAnimationSpeed(4)"
+                    title="4x Speed"
+                  >
+                    4x
+                  </button>
+                  <button
+                    class="speed-btn"
+                    onclick="setAnimationSpeed(5)"
+                    title="5x Speed"
+                  >
+                    5x
+                  </button>
+                </div>
+                <div class="motorcycle-status">
+                  <div class="status-icon" id="status-icon">🏍</div>
+                  <div class="status-text">
+                    <div class="status-label">Status</div>
+                    <div class="status-value" id="status-value">Ready</div>
+                  </div>
+                </div>
+                <div class="speed-display">
+                  <div class="speed-label">Estimated Speed</div>
+                  <div style="display: flex; align-items: center; gap: 4px">
+                    <div class="speed-value" id="speed-value">0</div>
+                    <div class="speed-unit">km/h</div>
+                  </div>
+                </div>
+                <div class="progress-container">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                  </div>
+                  <div class="progress-time" id="progress-time">
+                    0:00 / 0:00
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="sidebar-section"
+              id="results-section"
+              style="display: none"
+            >
+              <div class="section-label">Route Statistics</div>
+              <div class="stat-grid">
+                <div class="stat-card">
+                  <div class="stat-val" id="stat-dist">—</div>
+                  <div class="stat-key">Distance (km)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val accent" id="stat-time">—</div>
+                  <div class="stat-key">Est. Time (min)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val green" id="stat-ls">—</div>
+                  <div class="stat-key">Lane-Split Segs</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val accent" id="stat-ls-pct">—</div>
+                  <div class="stat-key">Lane-Split %</div>
+                </div>
+                <div class="stat-card full" style="display: none">
+                  <div class="stat-val" id="stat-algo" style="font-size: 13px">
+                    —
+                  </div>
+                  <div class="stat-key">Algorithm Used</div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="sidebar-section"
+              id="datasource-section"
+              style="display: none"
+            >
+              <div class="section-label">Data Sources Used</div>
+              <div class="datasource-card">
+                <div class="ds-header">
+                  <div class="ds-dot active"></div>
+                  <div class="ds-title">🗺 OpenStreetMap</div>
+                  <div class="ds-badge active" id="osm-badge">ACTIVE</div>
+                </div>
+                <div class="ds-body">
+                  <div class="ds-row">
+                    <span class="ds-key">Nodes</span
+                    ><span class="ds-val" id="osm-nodes">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Edges</span
+                    ><span class="ds-val" id="osm-edges">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Lane widths</span
+                    ><span class="ds-val" id="osm-width">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Lane counts</span
+                    ><span class="ds-val" id="osm-lanes">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Speed limits</span
+                    ><span class="ds-val" id="osm-speed">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Road types</span
+                    ><span class="ds-val">✔ Available</span>
+                  </div>
+                </div>
+              </div>
+              <div class="datasource-card">
+                <div class="ds-header">
+                  <div class="ds-dot" id="gm-dot"></div>
+                  <div class="ds-title">📡 Google Maps API</div>
+                  <div class="ds-badge" id="gm-badge">—</div>
+                </div>
+                <div class="ds-body">
+                  <div class="ds-row">
+                    <span class="ds-key">Used for</span
+                    ><span class="ds-val">Real-time traffic</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Traffic speed</span
+                    ><span class="ds-val" id="gm-traffic-speed">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Applied to</span
+                    ><span class="ds-val" id="gm-applied">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Car time (ref)</span
+                    ><span class="ds-val" id="gm-time">—</span>
+                  </div>
+                  <div class="ds-row">
+                    <span class="ds-key">Car distance</span
+                    ><span class="ds-val" id="gm-dist">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="sidebar-section"
+              id="comparison-section"
+              style="display: none"
+            >
+              <div class="section-label">vs. Google Maps (Car)</div>
+              <div class="comparison">
+                <div class="comp-row">
+                  <div class="comp-label">
+                    <div class="comp-dot moto"></div>
+                    MotoRoute
+                  </div>
+                  <div class="comp-val" id="comp-moto">—</div>
+                </div>
+                <div class="comp-row">
+                  <div class="comp-label">
+                    <div class="comp-dot gm"></div>
+                    Google Maps
+                  </div>
+                  <div class="comp-val" id="comp-gm">—</div>
+                </div>
+                <div class="comp-row">
+                  <div class="comp-label">⚡ Difference</div>
+                  <div class="comp-val" id="comp-diff">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div class="section-label">Route Legend</div>
+              <div class="legend">
+                <div class="legend-item">
+                  <div class="legend-line route"></div>
+                  <span>Motorcycle Route</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-line ls"></div>
+                  <span>Lane-Splitting Feasible</span>
+                </div>
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #22c55e;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 10px;
+                      color: #000;
+                      font-weight: 700;
+                      flex-shrink: 0;
+                    "
+                  >
+                    A
+                  </div>
+                  <span>Origin</span>
+                </div>
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #3b82f6;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 9px;
+                      color: #fff;
+                      font-weight: 700;
+                      flex-shrink: 0;
+                    "
+                  >
+                    W1
+                  </div>
+                  <span>Waypoints</span>
+                </div>
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #ef4444;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 10px;
+                      color: #fff;
+                      font-weight: 700;
+                      flex-shrink: 0;
+                    "
+                  >
+                    B
+                  </div>
+                  <span>Destination</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div class="section-label">Recent Routes</div>
+              <div
+                id="recent-routes-container"
+                class="recent-routes-list"
+              ></div>
+            </div>
+
+            <div class="developers-section">
+              <div class="developers-title">👨‍💻 Developers</div>
+              <div class="dev-list">
+                <div class="dev-item">
+                  <div class="dev-badge">D</div>
+                  <div>
+                    <div class="dev-name">Diomar Molina</div>
+                    <div class="dev-role">Head Developer</div>
+                  </div>
+                </div>
+                <div class="dev-item">
+                  <div
+                    class="dev-badge"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        #3b82f6 0%,
+                        #60a5fa 100%
+                      );
+                    "
+                  >
+                    S
+                  </div>
+                  <div>
+                    <div class="dev-name">Jelan Odiame</div>
+                    <div class="dev-role">Developer</div>
+                  </div>
+                </div>
+                <div class="dev-item">
+                  <div
+                    class="dev-badge"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        #22c55e 0%,
+                        #86efac 100%
+                      );
+                    "
+                  >
+                    A
+                  </div>
+                  <div>
+                    <div class="dev-name">Anne Mariel Bartolome</div>
+                    <div class="dev-role">Developer</div>
+                  </div>
+                </div>
+                <div class="dev-item">
+                  <div
+                    class="dev-badge"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        #ec4899 0%,
+                        #f472b6 100%
+                      );
+                    "
+                  >
+                    J
+                  </div>
+                  <div>
+                    <div class="dev-name">Sheena Mae Orita</div>
+                    <div class="dev-role">Developer</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="net-info" id="net-info">Loading network info...</div>
+          </div>
+        </div>
+
+        <div class="map-wrap">
+          <div id="map"></div>
+          <div class="click-banner" id="click-banner"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let map, originMarker, destMarker, routeLayer, lsLayer, boundaryLayer;
+      let originCoords = null,
+        destCoords = null;
+      let waypoints = [];
+      let waypointMarkers = [];
+      let pendingWaypoint = false;
+      let clickMode = "origin";
+      let selectedAlgo = "astar";
+      let networkBounds = null;
+
+      // Animation variables
+      let currentRoute = null;
+      let motorcycleMarker = null;
+      let isAnimating = false;
+      let animationStartTime = 0;
+      let animationElapsedTime = 0;
+      let animationSpeed = 1;
+      let animationFrameId = null;
+
+      map = L.map("map", { center: [13.6218, 123.1948], zoom: 14 });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Fetch and display network bounds
+      fetch("/api/bounds")
+        .then((res) => res.json())
+        .then((bounds) => {
+          networkBounds = bounds;
+          drawBoundary(bounds);
+        })
+        .catch((err) => console.error("Error fetching bounds:", err));
+
+      function drawBoundary(bounds) {
+        const rectangle = L.rectangle(
+          [
+            [bounds.min_lat, bounds.min_lon],
+            [bounds.max_lat, bounds.max_lon],
+          ],
+          {
+            color: "#ef4444",
+            weight: 2,
+            opacity: 0.7,
+            fill: false,
+            dashArray: "5, 5",
+          },
+        );
+        boundaryLayer = L.layerGroup([rectangle]).addTo(map);
+      }
+
+      function isPointInBounds(lat, lon) {
+        if (!networkBounds) return true;
+        return (
+          lat >= networkBounds.min_lat &&
+          lat <= networkBounds.max_lat &&
+          lon >= networkBounds.min_lon &&
+          lon <= networkBounds.max_lon
+        );
+      }
+
+      function makeIcon(label, color) {
+        return L.divIcon({
+          html: `<div style="background:${color};color:${color === "#22c55e" ? "#000" : "#fff"};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);">${label}</div>`,
+          className: "",
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+      }
+
+      function setClickMode(mode) {
+        clickMode = mode;
+        const banner = document.getElementById("click-banner");
+        banner.style.display = "block";
+        document.getElementById("origin-row").classList.remove("active");
+        document.getElementById("dest-row").classList.remove("active");
+        if (mode === "origin") {
+          banner.textContent = "📍 Click on the map to set Origin (A)";
+          document.getElementById("origin-row").classList.add("active");
+        } else if (mode === "dest") {
+          banner.textContent = "📍 Click on the map to set Destination (B)";
+          document.getElementById("dest-row").classList.add("active");
+        } else if (mode === "waypoint") {
+          banner.textContent = "📍 Click on the map to add a waypoint";
+        }
+      }
+
+      function enableWaypointMode() {
+        pendingWaypoint = true;
+        updateWaypointList();
+        setClickMode("waypoint");
+      }
+
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        sidebar.classList.toggle("active");
+        overlay.classList.toggle("active");
+      }
+
+      function closeSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
+      }
+
+      function toggleLocationBar() {
+        const bar = document.getElementById("locations-bar");
+        bar.style.display = bar.style.display === "none" ? "block" : "none";
+      }
+
+      function openInstructionsModal() {
+        const modal = document.getElementById("instructions-modal");
+        modal.classList.add("active");
+      }
+
+      function closeInstructionsModal() {
+        const modal = document.getElementById("instructions-modal");
+        modal.classList.remove("active");
+      }
+
+      // Close modal when clicking outside
+      document
+        .getElementById("instructions-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "instructions-modal") {
+            closeInstructionsModal();
+          }
+        });
+
+      // Bottom Panel Drag (Mobile)
+      const bottomPanel = document.getElementById("bottomPanel");
+      const sidebarHandle = document.getElementById("sidebarHandle");
+      const sidebar = document.getElementById("sidebar");
+      let panelStartY = 0;
+      let panelCurrentY = 0;
+      let panelIsDragging = false;
+
+      if (sidebarHandle && window.innerWidth < 768) {
+        sidebarHandle.addEventListener("touchstart", (e) => {
+          panelStartY = e.touches[0].clientY;
+          panelIsDragging = true;
+          document.body.classList.add("dragging");
+        });
+
+        sidebarHandle.addEventListener("touchmove", (e) => {
+          if (!panelIsDragging) return;
+          panelCurrentY = e.touches[0].clientY - panelStartY;
+
+          if (panelCurrentY > 0) {
+            sidebar.style.transform = `translateY(${panelCurrentY}px)`;
+          }
+        });
+
+        sidebarHandle.addEventListener("touchend", () => {
+          if (!panelIsDragging) return;
+          panelIsDragging = false;
+          document.body.classList.remove("dragging");
+
+          if (panelCurrentY > 100) {
+            sidebar.classList.add("collapsed");
+          } else {
+            sidebar.classList.remove("collapsed");
+          }
+
+          sidebar.style.transform = "";
+          panelCurrentY = 0;
+        });
+
+        // Tap handle to toggle
+        sidebarHandle.addEventListener("click", () => {
+          sidebar.classList.toggle("collapsed");
+        });
+      }
+
+      setClickMode("origin");
+      displayRecentRoutes();
+
+      // Handle mobile orientation change
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+      });
+
+      map.on("click", function (e) {
+        const { lat, lng } = e.latlng;
+
+        // Close sidebar on mobile when clicking map
+        closeSidebar();
+
+        // Check if point is within network bounds
+        if (!isPointInBounds(lat, lng)) {
+          document.getElementById("error-msg").textContent =
+            "⚠ Click location is outside the available data coverage area";
+          document.getElementById("error-msg").style.display = "block";
+          setTimeout(() => {
+            document.getElementById("error-msg").style.display = "none";
+          }, 3000);
+          return;
+        }
+
+        if (clickMode === "origin") {
+          originCoords = { lat, lng };
+          if (originMarker) map.removeLayer(originMarker);
+          originMarker = L.marker([lat, lng], {
+            icon: makeIcon("A", "#22c55e"),
+          }).addTo(map);
+          const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          document.getElementById("origin-coords").textContent = coordText;
+          document.getElementById("origin-coords-desktop").textContent =
+            coordText;
+          document.getElementById("origin-remove").style.display = "flex";
+          document.getElementById("origin-remove-desktop").style.display =
+            "flex";
+          setClickMode("dest");
+        } else if (clickMode === "dest") {
+          destCoords = { lat, lng };
+          if (destMarker) map.removeLayer(destMarker);
+          destMarker = L.marker([lat, lng], {
+            icon: makeIcon("B", "#ef4444"),
+          }).addTo(map);
+          const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          document.getElementById("dest-coords").textContent = coordText;
+          document.getElementById("dest-coords-desktop").textContent =
+            coordText;
+          document.getElementById("dest-remove").style.display = "flex";
+          document.getElementById("dest-remove-desktop").style.display = "flex";
+          document.getElementById("click-banner").style.display = "none";
+          document.getElementById("dest-row").classList.remove("active");
+          document.getElementById("waypoints-container").style.display =
+            "block";
+          clickMode = null;
+        } else if (clickMode === "waypoint") {
+          addWaypoint({ lat, lng });
+          document.getElementById("click-banner").style.display = "none";
+          clickMode = null;
+        }
+        updateCalcButton();
+      });
+
+      function addWaypoint(coords) {
+        waypoints.push(coords);
+        const idx = waypoints.length;
+
+        const marker = L.marker([coords.lat, coords.lng], {
+          icon: makeIcon("W" + idx, "#3b82f6"),
+        }).addTo(map);
+        waypointMarkers.push(marker);
+
+        pendingWaypoint = false;
+        updateWaypointList();
+      }
+
+      function removeOrigin(e) {
+        e.stopPropagation();
+        originCoords = null;
+        if (originMarker) {
+          map.removeLayer(originMarker);
+          originMarker = null;
+        }
+        document.getElementById("origin-coords").textContent =
+          "Click map to set";
+        document.getElementById("origin-coords-desktop").textContent =
+          "Click map to set";
+        document.getElementById("origin-remove").style.display = "none";
+        document.getElementById("origin-remove-desktop").style.display = "none";
+        updateCalcButton();
+      }
+
+      function removeDest(e) {
+        e.stopPropagation();
+        destCoords = null;
+        if (destMarker) {
+          map.removeLayer(destMarker);
+          destMarker = null;
+        }
+        document.getElementById("dest-coords").textContent = "Click map to set";
+        document.getElementById("dest-coords-desktop").textContent =
+          "Click map to set";
+        document.getElementById("dest-remove").style.display = "none";
+        document.getElementById("dest-remove-desktop").style.display = "none";
+        document.getElementById("waypoints-container").style.display = "none";
+        updateCalcButton();
+      }
+
+      function removeWaypoint(index) {
+        if (waypointMarkers[index]) {
+          map.removeLayer(waypointMarkers[index]);
+        }
+        waypoints.splice(index, 1);
+        waypointMarkers.splice(index, 1);
+        updateWaypointList();
+      }
+
+      function updateWaypointList() {
+        const container = document.getElementById("waypoint-list");
+        const mobileContainer = document.getElementById("waypoints-bar");
+        container.innerHTML = "";
+        mobileContainer.innerHTML = "";
+
+        waypoints.forEach((wp, idx) => {
+          const label = "W" + (idx + 1);
+          const item = document.createElement("div");
+          item.className = "waypoint-item";
+          item.innerHTML = `
+            <div class="point-marker waypoint">${label}</div>
+            <span class="waypoint-coords">${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}</span>
+            <button class="waypoint-remove" onclick="removeWaypoint(${idx})">Remove</button>
+          `;
+          container.appendChild(item);
+
+          const mobileItem = item.cloneNode(true);
+          mobileContainer.appendChild(mobileItem);
+        });
+
+        if (pendingWaypoint) {
+          const nextIdx = waypoints.length + 1;
+          const item = document.createElement("div");
+          item.className = "waypoint-item";
+          item.style.opacity = "0.6";
+          item.innerHTML = `
+            <div class="point-marker waypoint">W${nextIdx}</div>
+            <span class="waypoint-coords" style="color: var(--text); font-style: italic;">Click map to add...</span>
+            <button class="waypoint-remove" onclick="pendingWaypoint = false; updateWaypointList();" style="background: rgba(107, 114, 128, 0.5);">Cancel</button>
+          `;
+          container.appendChild(item);
+
+          const mobileItem = item.cloneNode(true);
+          mobileContainer.appendChild(mobileItem);
+        }
+      }
+
+      function selectAlgo(algo, el) {
+        selectedAlgo = algo;
+        document
+          .querySelectorAll(".algo-btn")
+          .forEach((b) => b.classList.remove("selected"));
+        el.classList.add("selected");
+      }
+
+      function updateCalcButton() {
+        const isDisabled = !(originCoords && destCoords);
+        const btn = document.getElementById("calc-btn");
+        const btnMobile = document.getElementById("calc-btn-mobile");
+        const waypointBtn = document.getElementById("add-waypoint-btn");
+        const waypointBtnMobile = document.getElementById(
+          "add-waypoint-btn-mobile",
+        );
+
+        if (btn) btn.disabled = isDisabled;
+        if (btnMobile) btnMobile.disabled = isDisabled;
+        if (waypointBtn) waypointBtn.disabled = isDisabled;
+        if (waypointBtnMobile) waypointBtnMobile.disabled = isDisabled;
+      }
+
+      function saveRoute(routeData) {
+        const routes = getRecentRoutes();
+        const newRoute = {
+          id: Date.now(),
+          origin: originCoords,
+          destination: destCoords,
+          waypoints: waypoints,
+          distance: routeData.stats.distance_km,
+          time: routeData.stats.time_min,
+          laneSplitCount: routeData.stats.lane_split_count,
+          laneSplitPct: routeData.stats.lane_split_pct,
+          totalSegments: routeData.stats.total_segments,
+          timestamp: new Date().toLocaleString(),
+          // Complete route data for visualization
+          coordinates: routeData.coordinates,
+          laneSlitSegments: routeData.lane_split_segments,
+          snapped: routeData.snapped,
+        };
+
+        routes.unshift(newRoute);
+        routes.splice(5);
+        localStorage.setItem("recentRoutes", JSON.stringify(routes));
+        displayRecentRoutes();
+      }
+
+      function getRecentRoutes() {
+        const routes = localStorage.getItem("recentRoutes");
+        return routes ? JSON.parse(routes) : [];
+      }
+
+      function displayRecentRoutes() {
+        const container = document.getElementById("recent-routes-container");
+        const routes = getRecentRoutes();
+
+        container.innerHTML = "";
+        if (routes.length === 0) {
+          container.innerHTML =
+            '<div style="color: var(--muted); font-size: 10px; padding: 8px;">No saved routes yet</div>';
+          return;
+        }
+
+        routes.forEach((route) => {
+          const originLabel = `${route.origin.lat.toFixed(4)}, ${route.origin.lng.toFixed(4)}`;
+          const destLabel = `${route.destination.lat.toFixed(4)}, ${route.destination.lng.toFixed(4)}`;
+          const waypointCount =
+            route.waypoints.length > 0 ? ` +${route.waypoints.length}wp` : "";
+
+          const item = document.createElement("div");
+          item.className = "recent-route-item";
+          item.onclick = () => loadRecentRoute(route);
+          item.innerHTML = `
+            <div class="recent-route-info">
+              <div class="recent-route-points">
+                A: ${originLabel} → B: ${destLabel}${waypointCount}
+              </div>
+              <div class="recent-route-stats">
+                <span>${route.distance}km</span>
+                <span>${route.time}min</span>
+                <span>${route.laneSplitPct}% LS</span>
+              </div>
+              <div class="recent-route-time">${route.timestamp}</div>
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      }
+
+      function loadRecentRoute(route) {
+        originCoords = route.origin;
+        destCoords = route.destination;
+        waypoints = route.waypoints;
+        waypointMarkers.forEach((m) => map.removeLayer(m));
+        waypointMarkers = [];
+
+        // Remove existing route layers
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (lsLayer) map.removeLayer(lsLayer);
+
+        if (originMarker) map.removeLayer(originMarker);
+        originMarker = L.marker([route.origin.lat, route.origin.lng], {
+          icon: makeIcon("A", "#22c55e"),
+        }).addTo(map);
+        document.getElementById("origin-coords").textContent =
+          `${route.origin.lat.toFixed(5)}, ${route.origin.lng.toFixed(5)}`;
+        document.getElementById("origin-remove").style.display = "flex";
+
+        if (destMarker) map.removeLayer(destMarker);
+        destMarker = L.marker([route.destination.lat, route.destination.lng], {
+          icon: makeIcon("B", "#ef4444"),
+        }).addTo(map);
+        document.getElementById("dest-coords").textContent =
+          `${route.destination.lat.toFixed(5)}, ${route.destination.lng.toFixed(5)}`;
+        document.getElementById("dest-remove").style.display = "flex";
+
+        waypoints.forEach((wp, idx) => {
+          const marker = L.marker([wp.lat, wp.lng], {
+            icon: makeIcon("W" + (idx + 1), "#3b82f6"),
+          }).addTo(map);
+          waypointMarkers.push(marker);
+        });
+
+        document.getElementById("waypoints-container").style.display = "block";
+        updateWaypointList();
+        updateCalcButton();
+
+        // Restore route visualization
+        if (route.coordinates && route.coordinates.length > 0) {
+          routeLayer = L.polyline(route.coordinates, {
+            color: "#3b82f6",
+            weight: 5,
+            opacity: 0.9,
+          }).addTo(map);
+
+          // Restore lane split segments
+          if (route.laneSlitSegments && route.laneSlitSegments.length > 0) {
+            lsLayer = L.layerGroup(
+              route.laneSlitSegments.map((s) =>
+                L.polyline(s.points ? s.points : [s.from, s.to], {
+                  color: "#f97316",
+                  weight: 6,
+                  opacity: 0.9,
+                  dashArray: "8, 6",
+                }),
+              ),
+            ).addTo(map);
+          }
+
+          map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+        }
+
+        // Restore statistics display
+        document.getElementById("stat-dist").textContent = route.distance;
+        document.getElementById("stat-time").textContent = route.time;
+        document.getElementById("stat-ls").textContent = route.laneSplitCount;
+        document.getElementById("stat-ls-pct").textContent =
+          route.laneSplitPct + "%";
+        document.getElementById("results-section").style.display = "block";
+
+        document.getElementById("click-banner").style.display = "none";
+        closeSidebar();
+      }
+
+      async function calculateRoute() {
+        if (!originCoords || !destCoords) return;
+        const btn = document.getElementById("calc-btn");
+        const btnMobile = document.getElementById("calc-btn-mobile");
+        if (btn) btn.disabled = true;
+        if (btnMobile) btnMobile.disabled = true;
+        document.getElementById("spinner").style.display = "block";
+        document.getElementById("calc-label").textContent = "Calculating...";
+        document.getElementById("error-msg").style.display = "none";
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (lsLayer) map.removeLayer(lsLayer);
+
+        try {
+          const waypointsList = waypoints.map((wp) => ({
+            lat: wp.lat,
+            lon: wp.lng,
+          }));
+
+          const res = await fetch("/api/route", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              origin_lat: originCoords.lat,
+              origin_lon: originCoords.lng,
+              dest_lat: destCoords.lat,
+              dest_lon: destCoords.lng,
+              waypoints: waypointsList,
+              algorithm: selectedAlgo,
+            }),
+          });
+          const data = await res.json();
+          if (!data.success) {
+            showError(data.error || "Route calculation failed.");
+            return;
+          }
+
+          routeLayer = L.polyline(data.coordinates, {
+            color: "#3b82f6",
+            weight: 5,
+            opacity: 0.9,
+          }).addTo(map);
+
+          if (data.lane_split_segments && data.lane_split_segments.length > 0) {
+            lsLayer = L.layerGroup(
+              data.lane_split_segments.map((s) =>
+                L.polyline(s.points ? s.points : [s.from, s.to], {
+                  color: "#f97316",
+                  weight: 6,
+                  opacity: 0.9,
+                  dashArray: "8, 6",
+                }),
+              ),
+            ).addTo(map);
+          }
+
+          // Move markers to snapped positions on the road
+          if (data.snapped) {
+            if (originMarker) map.removeLayer(originMarker);
+            originMarker = L.marker(data.snapped.origin, {
+              icon: makeIcon("A", "#22c55e"),
+            }).addTo(map);
+            document.getElementById("origin-coords").textContent =
+              `${data.snapped.origin[0].toFixed(5)}, ${data.snapped.origin[1].toFixed(5)}`;
+
+            if (destMarker) map.removeLayer(destMarker);
+            destMarker = L.marker(data.snapped.dest, {
+              icon: makeIcon("B", "#ef4444"),
+            }).addTo(map);
+            document.getElementById("dest-coords").textContent =
+              `${data.snapped.dest[0].toFixed(5)}, ${data.snapped.dest[1].toFixed(5)}`;
+          }
+
+          map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+
+          // Store route data for animation
+          // Pre-calculate cumulative distances and times accounting for lane-splitting speed (1.2x)
+          const distances = [0];
+          const cumulativeTimes = [0];
+          const laneSpitSet = new Set();
+
+          // Build set of coordinates that are on lane-split segments for quick lookup
+          if (data.lane_split_segments && data.lane_split_segments.length > 0) {
+            data.lane_split_segments.forEach((seg) => {
+              if (seg.points) {
+                seg.points.forEach((p) => {
+                  laneSpitSet.add(JSON.stringify(p));
+                });
+              }
+            });
+          }
+
+          // Calculate distances and time at each coordinate
+          const baseSpeed = data.stats.distance_km / (data.stats.time_min / 60); // km/h
+
+          for (let i = 1; i < data.coordinates.length; i++) {
+            const prev = data.coordinates[i - 1];
+            const curr = data.coordinates[i];
+            const dLat = curr[0] - prev[0];
+            const dLon = curr[1] - prev[1];
+            const segDist = Math.sqrt(dLat * dLat + dLon * dLon) * 111; // km
+            distances.push(distances[distances.length - 1] + segDist);
+
+            // Check if this segment is on a lane-split
+            const isLaneSplit = laneSpitSet.has(JSON.stringify(curr));
+            const speed = isLaneSplit ? baseSpeed * 1.2 : baseSpeed;
+            const timeForSegment = (segDist / speed) * 3600; // convert to seconds
+            cumulativeTimes.push(
+              cumulativeTimes[cumulativeTimes.length - 1] + timeForSegment,
+            );
+          }
+
+          // Normalize cumulative times to match backend's totalTime
+          const calculatedTotal = cumulativeTimes[cumulativeTimes.length - 1];
+          const timeScale = (data.stats.time_min * 60) / calculatedTotal;
+          for (let i = 0; i < cumulativeTimes.length; i++) {
+            cumulativeTimes[i] *= timeScale;
+          }
+
+          currentRoute = {
+            coordinates: data.coordinates,
+            distances: distances,
+            cumulativeTimes: cumulativeTimes,
+            laneSpaceSegments: data.lane_split_segments || [],
+            totalDistance: data.stats.distance_km,
+            totalTime: data.stats.time_min * 60, // Convert to seconds
+          };
+
+          // Show animation section and prepare
+          document.getElementById("animation-section").style.display = "block";
+          document.getElementById("animation-controls").classList.add("active");
+          restartAnimation();
+          playAnimation();
+
+          const s = data.stats;
+          document.getElementById("stat-dist").textContent = s.distance_km;
+          document.getElementById("stat-time").textContent = s.time_min;
+          document.getElementById("stat-ls").textContent = s.lane_split_count;
+          document.getElementById("stat-ls-pct").textContent =
+            s.lane_split_pct + "%";
+          document.getElementById("stat-algo").textContent = data.algorithm;
+          document.getElementById("results-section").style.display = "block";
+
+          saveRoute(data);
+          closeSidebar();
+
+          if (data.data_sources) {
+            const osm = data.data_sources.osm;
+            const gm = data.data_sources.google_maps;
+            document.getElementById("osm-nodes").textContent =
+              osm.nodes.toLocaleString() + " intersections";
+            document.getElementById("osm-edges").textContent =
+              osm.edges.toLocaleString() + " road segments";
+            document.getElementById("osm-width").textContent =
+              osm.attributes.includes("Lane widths")
+                ? "✔ Fetched"
+                : "✘ Not available";
+            document.getElementById("osm-lanes").textContent =
+              osm.attributes.includes("Lane counts")
+                ? "✔ Fetched"
+                : "✘ Not available";
+            document.getElementById("osm-speed").textContent =
+              osm.attributes.includes("Speed limits")
+                ? "✔ Fetched"
+                : "✘ Not available";
+            const gmDot = document.getElementById("gm-dot");
+            const gmBadge = document.getElementById("gm-badge");
+            if (gm.status === "active") {
+              gmDot.className = "ds-dot active";
+              gmBadge.textContent = "ACTIVE";
+              gmBadge.className = "ds-badge active";
+              document.getElementById("gm-traffic-speed").textContent =
+                gm.traffic_speed_kph + " kph (live)";
+              document.getElementById("gm-applied").textContent =
+                osm.edges.toLocaleString() + " segments";
+              document.getElementById("gm-time").textContent = gm.comparison
+                ? gm.comparison.duration_min + " min"
+                : "—";
+              document.getElementById("gm-dist").textContent = gm.comparison
+                ? gm.comparison.distance_km + " km"
+                : "—";
+            } else {
+              gmDot.className = "ds-dot inactive";
+              gmBadge.textContent = "UNAVAILABLE";
+              gmBadge.className = "ds-badge inactive";
+              document.getElementById("gm-traffic-speed").textContent =
+                "Using OSM estimates";
+              document.getElementById("gm-applied").textContent = "N/A";
+              document.getElementById("gm-time").textContent = "N/A";
+              document.getElementById("gm-dist").textContent = "N/A";
+            }
+            document.getElementById("datasource-section").style.display =
+              "block";
+          }
+
+          if (data.google_maps_comparison) {
+            const gm = data.google_maps_comparison;
+            const diff = s.time_min - gm.duration_min;
+            document.getElementById("comp-moto").textContent =
+              `${s.time_min} min`;
+            document.getElementById("comp-gm").textContent =
+              `${gm.duration_min} min`;
+            const diffEl = document.getElementById("comp-diff");
+            if (diff < 0) {
+              diffEl.textContent = `${Math.abs(diff).toFixed(1)} min faster`;
+              diffEl.className = "comp-val better";
+            } else {
+              diffEl.textContent = `${diff.toFixed(1)} min slower`;
+              diffEl.className = "comp-val worse";
+            }
+            document.getElementById("comparison-section").style.display =
+              "block";
+          }
+        } catch (err) {
+          showError("Network error. Is the Flask server running?");
+        } finally {
+          const btn = document.getElementById("calc-btn");
+          const btnMobile = document.getElementById("calc-btn-mobile");
+          if (btn) btn.disabled = false;
+          if (btnMobile) btnMobile.disabled = false;
+          document.getElementById("spinner").style.display = "none";
+          document.getElementById("calc-label").textContent =
+            "🏍 Calculate Motorcycle Route";
+          updateCalcButton();
+        }
+      }
+
+      function resetRoute() {
+        // Clear map layers
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (lsLayer) map.removeLayer(lsLayer);
+        if (motorcycleMarker) map.removeLayer(motorcycleMarker);
+        if (originMarker) map.removeLayer(originMarker);
+        if (destMarker) map.removeLayer(destMarker);
+
+        // Clear route data
+        currentRoute = null;
+        routeLayer = null;
+        lsLayer = null;
+        motorcycleMarker = null;
+
+        // Reset animation state
+        restartAnimation();
+
+        // Hide results and animation sections
+        document.getElementById("animation-section").style.display = "none";
+        document.getElementById("results-section").style.display = "none";
+        document.getElementById("comparison-section").style.display = "none";
+        document.getElementById("datasource-section").style.display = "none";
+
+        // Clear error messages
+        document.getElementById("error-msg").style.display = "none";
+
+        // Reset location markers
+        originCoords = null;
+        destCoords = null;
+        waypoints = [];
+        waypointMarkers.forEach((m) => map.removeLayer(m));
+        waypointMarkers = [];
+
+        // Update UI
+        document.getElementById("origin-coords").textContent =
+          "Click map to set";
+        document.getElementById("dest-coords").textContent = "Click map to set";
+        document.getElementById("origin-coords-desktop").textContent =
+          "Click map to set";
+        document.getElementById("dest-coords-desktop").textContent =
+          "Click map to set";
+        document.getElementById("origin-remove").style.display = "none";
+        document.getElementById("dest-remove").style.display = "none";
+        document.getElementById("origin-remove-desktop").style.display = "none";
+        document.getElementById("dest-remove-desktop").style.display = "none";
+        document.getElementById("origin-row").classList.remove("active");
+        document.getElementById("dest-row").classList.remove("active");
+        document.getElementById("waypoint-list").innerHTML = "";
+        document.getElementById("waypoints-container").style.display = "none";
+
+        // Reset calculate button
+        updateCalcButton();
+      }
+
+      // Animation Functions
+      function getPointOnRoute(fraction) {
+        if (!currentRoute || !currentRoute.coordinates || fraction <= 0) {
+          return currentRoute.coordinates[0];
+        }
+        if (fraction >= 1) {
+          return currentRoute.coordinates[currentRoute.coordinates.length - 1];
+        }
+
+        const coords = currentRoute.coordinates;
+        const cumulativeTimes = currentRoute.cumulativeTimes || [];
+        const totalTime = cumulativeTimes[cumulativeTimes.length - 1] || 1;
+        const targetTime = fraction * totalTime;
+
+        // Binary search to find which segment we're on based on time
+        let index = 0;
+        for (let i = 0; i < cumulativeTimes.length; i++) {
+          if (cumulativeTimes[i] <= targetTime) {
+            index = i;
+          } else {
+            break;
+          }
+        }
+
+        if (index >= coords.length - 1) {
+          return coords[coords.length - 1];
+        }
+
+        // Interpolate within the segment based on time
+        const segmentTimeStart = cumulativeTimes[index];
+        const segmentTimeEnd = cumulativeTimes[index + 1];
+        const segmentTimeDuration = segmentTimeEnd - segmentTimeStart;
+        const remainder =
+          segmentTimeDuration > 0
+            ? (targetTime - segmentTimeStart) / segmentTimeDuration
+            : 0;
+
+        const p1 = coords[index];
+        const p2 = coords[index + 1];
+        const interpolated = [
+          p1[0] + (p2[0] - p1[0]) * remainder,
+          p1[1] + (p2[1] - p1[1]) * remainder,
+        ];
+        return interpolated;
+      }
+
+      function isPointOnLaneSplit(lat, lng) {
+        if (!currentRoute || !currentRoute.laneSpaceSegments) {
+          return false;
+        }
+
+        const tolerance = 0.0001;
+        for (const segment of currentRoute.laneSpaceSegments) {
+          if (segment.points) {
+            for (const point of segment.points) {
+              if (
+                Math.abs(point[0] - lat) < tolerance &&
+                Math.abs(point[1] - lng) < tolerance
+              ) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      function createMotorcycleMarker(lat, lng, isLaneSplitting) {
+        const offsetLng = isLaneSplitting ? 0.00005 : 0;
+
+        const html = `
+          <div style="
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, ${isLaneSplitting ? "#f97316 0%, #fb923c" : "#3b82f6 0%, #60a5fa"} 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(${isLaneSplitting ? "249, 115, 22" : "59, 130, 246"}, 0.5);
+            border: 2px solid white;
+            transform: ${isLaneSplitting ? "rotate(15deg)" : "rotate(0deg)"};
+            transition: all 0.3s ease;
+          " title="${isLaneSplitting ? "🏍 Lane Splitting" : "🏍 Normal Route"}">
+            🏍
+          </div>
+        `;
+
+        if (motorcycleMarker) {
+          map.removeLayer(motorcycleMarker);
+        }
+
+        motorcycleMarker = L.marker([lat, lng + offsetLng], {
+          icon: L.divIcon({
+            html: html,
+            className: "",
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          }),
+        }).addTo(map);
+      }
+
+      function animationFrame() {
+        if (!isAnimating || !currentRoute) return;
+
+        const elapsedMs =
+          Date.now() - animationStartTime + animationElapsedTime;
+        const totalMs = (currentRoute.totalTime * 1000) / animationSpeed;
+        const fraction = Math.min(elapsedMs / totalMs, 1);
+
+        const pos = getPointOnRoute(fraction);
+        const onLaneSplit = isPointOnLaneSplit(pos[0], pos[1]);
+
+        createMotorcycleMarker(pos[0], pos[1], onLaneSplit);
+
+        // Update status display
+        const statusEl = document.getElementById("status-value");
+        if (fraction === 0) {
+          statusEl.textContent = "🚦 Starting Route";
+          statusEl.className = "status-value";
+        } else if (fraction >= 1) {
+          statusEl.textContent = "✅ Destination Reached";
+          statusEl.className = "status-value complete";
+        } else if (onLaneSplit) {
+          statusEl.textContent = "🟠 Lane Splitting";
+          statusEl.className = "status-value lane-split";
+        } else {
+          statusEl.textContent = "🔵 Normal Route";
+          statusEl.className = "status-value normal";
+        }
+
+        // Calculate and update speed display
+        const baseSpeed =
+          currentRoute.totalDistance / (currentRoute.totalTime / 3600); // km/h
+        const currentSpeed = onLaneSplit
+          ? Math.round(baseSpeed * 1.2)
+          : Math.round(baseSpeed);
+        document.getElementById("speed-value").textContent = currentSpeed;
+
+        // Update progress bar
+        const progressPercent = fraction * 100;
+        document.getElementById("progress-fill").style.width =
+          progressPercent + "%";
+
+        const elapsedSec = elapsedMs / 1000;
+        const totalSec = currentRoute.totalTime;
+        const minutes = Math.floor(elapsedSec / 60);
+        const seconds = Math.floor(elapsedSec % 60);
+        const totalMinutes = Math.floor(totalSec / 60);
+        const totalSeconds = Math.floor(totalSec % 60);
+
+        document.getElementById("progress-time").textContent =
+          `${minutes}:${seconds.toString().padStart(2, "0")} / ${totalMinutes}:${totalSeconds.toString().padStart(2, "0")}`;
+
+        if (fraction < 1) {
+          animationFrameId = requestAnimationFrame(animationFrame);
+        } else {
+          isAnimating = false;
+          document.getElementById("play-btn").disabled = false;
+          document.getElementById("pause-btn").disabled = true;
+          document.getElementById("restart-btn").disabled = false;
+        }
+      }
+
+      function togglePlayPause() {
+        if (!currentRoute) return;
+
+        const btn = document.getElementById("play-pause-btn");
+        if (!isAnimating) {
+          // Play
+          isAnimating = true;
+          animationStartTime = Date.now();
+          btn.textContent = "⏸";
+          btn.title = "Pause";
+          animationFrameId = requestAnimationFrame(animationFrame);
+        } else {
+          // Pause
+          isAnimating = false;
+          animationElapsedTime += Date.now() - animationStartTime;
+          cancelAnimationFrame(animationFrameId);
+          btn.textContent = "▶";
+          btn.title = "Play";
+        }
+      }
+
+      function playAnimation() {
+        togglePlayPause();
+      }
+
+      function pauseAnimation() {
+        if (isAnimating) {
+          togglePlayPause();
+        }
+      }
+
+      function restartAnimation() {
+        if (motorcycleMarker) {
+          map.removeLayer(motorcycleMarker);
+          motorcycleMarker = null;
+        }
+        isAnimating = false;
+        animationElapsedTime = 0;
+        cancelAnimationFrame(animationFrameId);
+        document.getElementById("progress-fill").style.width = "0%";
+        document.getElementById("progress-time").textContent = "0:00 / 0:00";
+        document.getElementById("status-value").textContent =
+          "🚦 Ready to Start";
+        document.getElementById("status-value").className = "status-value";
+        document.getElementById("speed-value").textContent = "0";
+        const btn = document.getElementById("play-pause-btn");
+        btn.textContent = "▶";
+        btn.title = "Play";
+
+        if (currentRoute) {
+          const firstPos = getPointOnRoute(0);
+          createMotorcycleMarker(firstPos[0], firstPos[1], false);
+        }
+      }
+
+      function setAnimationSpeed(speed) {
+        animationSpeed = parseFloat(speed);
+
+        // Update active button
+        document.querySelectorAll(".speed-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+
+        if (isAnimating) {
+          animationElapsedTime += Date.now() - animationStartTime;
+          animationStartTime = Date.now();
+        }
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("error-msg");
+        el.textContent = msg;
+        el.style.display = "block";
+      }
+
+      fetch("/api/network-info")
+        .then((r) => r.json())
+        .then((d) => {
+          document.getElementById("net-info").textContent =
+            `Network: ${d.nodes.toLocaleString()} nodes · ${d.edges.toLocaleString()} edges · ${d.study_area}`;
+        })
+        .catch(() => {
+          document.getElementById("net-info").textContent =
+            "Network info unavailable";
+        });
+    </script>
+  </body>
+</html>
