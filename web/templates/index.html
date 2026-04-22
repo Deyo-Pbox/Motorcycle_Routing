@@ -2639,7 +2639,7 @@
                       );
                     "
                   >
-                    S
+                    J
                   </div>
                   <div>
                     <div class="dev-name">Jelan Odiame</div>
@@ -2675,7 +2675,7 @@
                       );
                     "
                   >
-                    J
+                    S
                   </div>
                   <div>
                     <div class="dev-name">Sheena Mae Orita</div>
@@ -3714,7 +3714,7 @@
         if (currentRoute) {
           const firstPos = getPointOnRoute(0);
           const baseSpeed = Math.round(
-            currentRoute.totalDistance / (currentRoute.totalTime / 3600)
+            currentRoute.totalDistance / (currentRoute.totalTime / 3600),
           );
           createMotorcycleMarker(firstPos[0], firstPos[1], false, baseSpeed);
         }
