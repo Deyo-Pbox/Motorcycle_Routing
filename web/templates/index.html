@@ -3543,25 +3543,44 @@
         return false;
       }
 
-      function createMotorcycleMarker(lat, lng, isLaneSplitting) {
+      function createMotorcycleMarker(lat, lng, isLaneSplitting, speed = 0) {
         const offsetLng = isLaneSplitting ? 0.00005 : 0;
 
         const html = `
           <div style="
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, ${isLaneSplitting ? "#f97316 0%, #fb923c" : "#3b82f6 0%, #60a5fa"} 100%);
-            border-radius: 50%;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 12px rgba(${isLaneSplitting ? "249, 115, 22" : "59, 130, 246"}, 0.5);
-            border: 2px solid white;
-            transform: ${isLaneSplitting ? "rotate(15deg)" : "rotate(0deg)"};
-            transition: all 0.3s ease;
-          " title="${isLaneSplitting ? "🏍 Lane Splitting" : "🏍 Normal Route"}">
-            🏍
+            gap: 4px;
+          ">
+            <div style="
+              background: rgba(13, 15, 20, 0.95);
+              border: 1px solid #2a3045;
+              border-radius: 4px;
+              padding: 2px 6px;
+              font-size: 11px;
+              font-weight: 700;
+              color: #f97316;
+              font-family: 'Space Mono', monospace;
+              white-space: nowrap;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            ">${speed} km/h</div>
+            <div style="
+              width: 28px;
+              height: 28px;
+              background: linear-gradient(135deg, ${isLaneSplitting ? "#f97316 0%, #fb923c" : "#3b82f6 0%, #60a5fa"} 100%);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 16px;
+              box-shadow: 0 4px 12px rgba(${isLaneSplitting ? "249, 115, 22" : "59, 130, 246"}, 0.5);
+              border: 2px solid white;
+              transform: ${isLaneSplitting ? "rotate(15deg)" : "rotate(0deg)"};
+              transition: all 0.3s ease;
+            " title="${isLaneSplitting ? "🏍 Lane Splitting" : "🏍 Normal Route"}">
+              🏍
+            </div>
           </div>
         `;
 
@@ -3573,8 +3592,8 @@
           icon: L.divIcon({
             html: html,
             className: "",
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
+            iconSize: [50, 55],
+            iconAnchor: [25, 50],
           }),
         }).addTo(map);
       }
@@ -3590,7 +3609,14 @@
         const pos = getPointOnRoute(fraction);
         const onLaneSplit = isPointOnLaneSplit(pos[0], pos[1]);
 
-        createMotorcycleMarker(pos[0], pos[1], onLaneSplit);
+        // Calculate and update speed display
+        const baseSpeed =
+          currentRoute.totalDistance / (currentRoute.totalTime / 3600); // km/h
+        const currentSpeed = onLaneSplit
+          ? Math.round(baseSpeed * 1.2)
+          : Math.round(baseSpeed);
+
+        createMotorcycleMarker(pos[0], pos[1], onLaneSplit, currentSpeed);
 
         // Update status display
         const statusEl = document.getElementById("status-value");
@@ -3608,12 +3634,7 @@
           statusEl.className = "status-value normal";
         }
 
-        // Calculate and update speed display
-        const baseSpeed =
-          currentRoute.totalDistance / (currentRoute.totalTime / 3600); // km/h
-        const currentSpeed = onLaneSplit
-          ? Math.round(baseSpeed * 1.2)
-          : Math.round(baseSpeed);
+        // Update speed display in sidebar (kept for reference)
         document.getElementById("speed-value").textContent = currentSpeed;
 
         // Update progress bar
@@ -3692,7 +3713,10 @@
 
         if (currentRoute) {
           const firstPos = getPointOnRoute(0);
-          createMotorcycleMarker(firstPos[0], firstPos[1], false);
+          const baseSpeed = Math.round(
+            currentRoute.totalDistance / (currentRoute.totalTime / 3600)
+          );
+          createMotorcycleMarker(firstPos[0], firstPos[1], false, baseSpeed);
         }
       }
 
