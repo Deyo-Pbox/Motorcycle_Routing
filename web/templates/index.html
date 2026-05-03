@@ -2477,9 +2477,9 @@
               <div class="step-num">5</div>
               <span
                 ><strong>Watch the Route:</strong> Click
-                <strong>▶ Play</strong> to see the motorcycle ride along the
-                route. The color shows traffic: 🟢 Free, 🟡 Moderate, 🔴
-                Heavy.</span
+                <strong>▶ Play</strong> to see the motorcycle estimated ride and
+                speed along the route. The color shows traffic: 🟢 Free, 🟡
+                Moderate, 🔴 Heavy.</span
               >
             </div>
             <hr
@@ -4097,7 +4097,7 @@
           const isSet = wp.lat !== null && wp.lng !== null;
           const coordsText = isSet
             ? `${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}`
-            : "Not set - search or click map";
+            : "Not set - click map to set waypoints";
           const coordsStyle = isSet
             ? "color: var(--muted);"
             : "color: #ef4444; font-style: italic;";
