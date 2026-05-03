@@ -68,10 +68,11 @@ def get_traffic_congestion(origin_lat, origin_lon, dest_lat, dest_lon):
         # Calculate congestion ratio
         congestion_ratio = traffic_duration_s / normal_duration_s if normal_duration_s > 0 else 1.0
 
-        # Determine level: green (1.0-1.2x), yellow (1.2-1.5x), red (1.5x+)
-        if congestion_ratio < 1.2:
+        # Determine level with MORE SENSITIVE thresholds to show moderate congestion
+        # green (0-8% slower), yellow (8-20% slower), red (20%+ slower)
+        if congestion_ratio < 1.08:
             return "green"
-        elif congestion_ratio < 1.5:
+        elif congestion_ratio < 1.20:
             return "yellow"
         else:
             return "red"
