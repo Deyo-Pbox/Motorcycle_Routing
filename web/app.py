@@ -14,7 +14,6 @@ from src.algorithms.route_calculator import (
     path_to_coordinates,
     get_lane_split_segments
 )
-from src.api.traffic_api import get_google_maps_route_time
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -137,10 +136,6 @@ def calculate_route():
         if total_segments > 0:
             ls_pct = round(total_lane_split_segments / total_segments * 100, 1)
 
-        gm_comparison = get_google_maps_route_time(
-            origin_lat, origin_lon, dest_lat, dest_lon
-        )
-
         # Check what OSM attributes are available
         osm_attributes = []
         sample_edges = list(G.edges(data=True))[:20]
@@ -176,7 +171,6 @@ def calculate_route():
                 "total_segments": total_segments,
                 "lane_split_pct": ls_pct,
             },
-            "google_maps_comparison": gm_comparison,
             "data_sources": {
                 "osm": {
                     "status": "active",
@@ -188,8 +182,7 @@ def calculate_route():
                     "status": "active" if traffic_speed else "unavailable",
                     "used_for": "Real-time traffic speed for routing",
                     "traffic_speed_kph": traffic_speed,
-                    "traffic_source": traffic_source,
-                    "comparison": gm_comparison,
+                    "traffic_source": traffic_source
                 }
             }
         }
@@ -214,6 +207,33 @@ def network_info():
         "edges": len(G.edges),
         "study_area": "Naga, Camarines Sur, Philippines"
     })
+
+
+@app.route("/api/traffic-congestion", methods=["GET"])
+def get_traffic_congestion():
+    """Get traffic congestion level for route (green/yellow/red)"""
+    origin_lat = request.args.get("origin_lat", type=float)
+    origin_lon = request.args.get("origin_lon", type=float)
+    dest_lat = request.args.get("dest_lat", type=float)
+    dest_lon = request.args.get("dest_lon", type=float)
+    
+    if not all([origin_lat, origin_lon, dest_lat, dest_lon]):
+        return jsonify({"error": "Missing coordinates"}), 400
+    
+    try:
+        from src.api.traffic_api import get_traffic_congestion
+        congestion_level = get_traffic_congestion(origin_lat, origin_lon, dest_lat, dest_lon)
+        return jsonify({
+            "congestion": congestion_level,
+            "color_map": {
+                "green": "#22c55e",    # Green - free flowing
+                "yellow": "#eab308",   # Yellow - moderate congestion
+                "red": "#ef4444"       # Red - heavy congestion
+            }
+        })
+    except Exception as e:
+        print(f"[App] Congestion error: {e}")
+        return jsonify({"congestion": "green"}), 200  # Default to green
 
 
 @app.route("/api/roads")
@@ -257,6 +277,51 @@ def get_bounds():
     }
     
     return jsonify(bounds)
+
+
+@app.route("/api/search-places", methods=["GET"])
+def search_places():
+    """Search for places and establishments using Nominatim API"""
+    query = request.args.get("q", "").strip()
+    
+    if not query or len(query) < 2:
+        return jsonify({"error": "Query too short"}), 400
+    
+    try:
+        import requests
+        # Search using Nominatim (OpenStreetMap)
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "format": "json",
+                "q": query,
+                "limit": 10,
+                "countrycodes": "ph"  # Focus on Philippines
+            },
+            headers={"User-Agent": "MotoRoute/1.0"}
+        )
+        
+        if response.status_code == 200:
+            results = response.json()
+            return jsonify({
+                "results": [
+                    {
+                        "name": r.get("display_name", "").split(",")[0],
+                        "display_name": r.get("display_name", ""),
+                        "lat": float(r["lat"]),
+                        "lon": float(r["lon"]),
+                        "type": r.get("type", "unknown"),
+                        "class": r.get("class", "unknown")
+                    }
+                    for r in results
+                ]
+            })
+        else:
+            return jsonify({"error": "Search failed"}), 500
+            
+    except Exception as e:
+        print(f"[App] Search error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -37,6 +37,50 @@ def get_traffic_speed(origin_lat, origin_lon, dest_lat, dest_lon):
     return None
 
 
+def get_traffic_congestion(origin_lat, origin_lon, dest_lat, dest_lon):
+    """
+    Get traffic congestion level: 'green' (free-flowing), 'yellow' (moderate), 'red' (heavy)
+    Compares normal duration vs traffic duration
+    """
+    if not GOOGLE_MAPS_API_KEY:
+        return "green"  # No data, assume free-flowing
+
+    url = "https://maps.googleapis.com/maps/api/directions/json"
+    params = {
+        "origin": f"{origin_lat},{origin_lon}",
+        "destination": f"{dest_lat},{dest_lon}",
+        "departure_time": "now",
+        "traffic_model": "best_guess",
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        data = response.json()
+
+        if data.get("status") != "OK":
+            return "green"
+
+        leg = data["routes"][0]["legs"][0]
+        normal_duration_s = leg["duration"]["value"]
+        traffic_duration_s = leg.get("duration_in_traffic", {}).get("value", normal_duration_s)
+
+        # Calculate congestion ratio
+        congestion_ratio = traffic_duration_s / normal_duration_s if normal_duration_s > 0 else 1.0
+
+        # Determine level: green (1.0-1.2x), yellow (1.2-1.5x), red (1.5x+)
+        if congestion_ratio < 1.2:
+            return "green"
+        elif congestion_ratio < 1.5:
+            return "yellow"
+        else:
+            return "red"
+
+    except Exception as e:
+        print(f"[TrafficAPI] Congestion check error: {e}")
+        return "green"  # Default to green on error
+
+
 def get_google_maps_route_time(origin_lat, origin_lon, dest_lat, dest_lon):
     if not GOOGLE_MAPS_API_KEY:
         return None

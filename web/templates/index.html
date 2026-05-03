@@ -105,11 +105,30 @@
         box-shadow: var(--shadow-md);
       }
       .sidebar::-webkit-scrollbar {
-        width: 4px;
+        width: 8px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: rgba(249, 115, 22, 0.05);
+        border-radius: 10px;
+        margin: 8px 0;
       }
       .sidebar::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 4px;
+        background: linear-gradient(
+          180deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        border-radius: 10px;
+        border: 2px solid var(--surface);
+        transition: all 0.3s ease;
+      }
+      .sidebar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          180deg,
+          var(--accent2) 0%,
+          var(--accent) 100%
+        );
+        box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
       }
       .map-wrap {
         flex: 1;
@@ -254,21 +273,23 @@
       }
       .point-row {
         display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 14px;
         background: linear-gradient(
           135deg,
           var(--surface2) 0%,
           var(--surface3) 100%
         );
-        border-radius: 12px;
-        margin-bottom: 6px;
-        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 8px;
+        border: 1.5px solid var(--border);
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1;
       }
       .point-row::before {
         content: "";
@@ -280,15 +301,24 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(255, 255, 255, 0.1),
+          rgba(255, 255, 255, 0.08),
           transparent
         );
         transition: left 0.5s;
+        z-index: 1;
+      }
+
+      #origin-row-desktop {
+        z-index: 2;
+      }
+
+      #dest-row-desktop {
+        z-index: 1;
       }
       .point-row:hover {
         border-color: var(--accent);
-        box-shadow: 0 0 16px rgba(249, 115, 22, 0.2);
-        transform: translateX(2px);
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25);
+        transform: translateY(-1px);
       }
       .point-row:hover::before {
         left: 100%;
@@ -297,84 +327,120 @@
         border-color: var(--accent);
         background: linear-gradient(
           135deg,
-          rgba(249, 115, 22, 0.1) 0%,
-          rgba(249, 115, 22, 0.05) 100%
+          rgba(249, 115, 22, 0.12) 0%,
+          rgba(249, 115, 22, 0.06) 100%
         );
-        box-shadow: inset 0 0 12px rgba(249, 115, 22, 0.15);
+        box-shadow:
+          0 4px 16px rgba(249, 115, 22, 0.3),
+          inset 0 0 12px rgba(249, 115, 22, 0.1);
       }
       .point-row:last-child {
         margin-bottom: 0;
       }
       .point-marker {
-        width: 26px;
-        height: 26px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        font-size: 11px;
+        font-size: 12px;
         flex-shrink: 0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        z-index: 2;
       }
       .point-marker:hover {
-        transform: scale(1.15);
+        transform: scale(1.12) rotate(5deg);
       }
       .point-marker.origin {
-        background: linear-gradient(
-          135deg,
-          var(--green) 0%,
-          var(--green-light) 100%
-        );
-        color: #000;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: #fff;
       }
       .point-marker.dest {
-        background: linear-gradient(
-          135deg,
-          var(--red) 0%,
-          var(--red-light) 100%
-        );
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #fff;
       }
       .point-marker.waypoint {
-        background: linear-gradient(
-          135deg,
-          var(--blue) 0%,
-          var(--blue-light) 100%
-        );
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         color: #fff;
       }
       .point-coords {
-        font-family: "Space Mono", monospace;
-        font-size: 9px;
-        color: var(--muted);
-        line-height: 1.5;
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 2;
       }
       .point-label {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--text);
         font-family: "Syne", sans-serif;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .point-input-wrapper {
+        position: relative;
+        width: 100%;
+      }
+      .point-input-wrapper input {
+        width: 100% !important;
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        color: var(--text) !important;
+        transition: all 0.3s ease !important;
+      }
+      .point-input-wrapper input:focus {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--accent) !important;
+        outline: none !important;
+        box-shadow: 0 0 12px rgba(249, 115, 22, 0.15) !important;
+      }
+      .point-input-wrapper input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+      }
+      .point-status {
+        font-size: 10px;
+        color: var(--muted);
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 16px;
+      }
+      .point-status.filled {
+        color: #22c55e;
+      }
+      .point-status-icon {
+        width: 12px;
+        height: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
       }
       .point-remove {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         padding: 0;
-        background: rgba(239, 68, 68, 0.15);
+        background: rgba(239, 68, 68, 0.12);
         color: var(--red);
-        border: 1.5px solid var(--red);
+        border: 1.5px solid rgba(239, 68, 68, 0.3);
         border-radius: 50%;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+        z-index: 2;
       }
       .point-remove:hover {
         background: var(--red);
@@ -667,50 +733,6 @@
         font-family: "Space Mono", monospace;
         text-transform: uppercase;
       }
-      .comparison {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .comp-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        border-bottom: 1px solid var(--border);
-      }
-      .comp-row:last-child {
-        border-bottom: none;
-      }
-      .comp-label {
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .comp-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-      }
-      .comp-dot.moto {
-        background: var(--accent);
-      }
-      .comp-dot.gm {
-        background: var(--muted);
-      }
-      .comp-val {
-        font-family: "Space Mono", monospace;
-        font-size: 11px;
-        font-weight: 700;
-      }
-      .comp-val.better {
-        color: var(--green);
-      }
-      .comp-val.worse {
-        color: var(--red);
-      }
       .datasource-card {
         background: var(--surface2);
         border: 1px solid var(--border);
@@ -788,6 +810,141 @@
         text-align: right;
         font-family: "Space Mono", monospace;
       }
+      .search-container {
+        position: relative;
+        margin-bottom: 10px;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
+      }
+
+      .search-input::placeholder {
+        color: var(--muted);
+      }
+
+      .search-label {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        font-weight: 700;
+      }
+
+      .autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: var(--surface2);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 10000;
+        display: none;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+      }
+
+      .autocomplete-dropdown.active {
+        display: block;
+        animation: slideDown 0.2s ease-out;
+      }
+
+      .autocomplete-dropdown::-webkit-scrollbar {
+        width: 6px;
+      }
+      .autocomplete-dropdown::-webkit-scrollbar-track {
+        background: rgba(249, 115, 22, 0.05);
+        border-radius: 10px;
+        margin: 6px 0;
+      }
+      .autocomplete-dropdown::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          180deg,
+          rgba(249, 115, 22, 0.5) 0%,
+          rgba(249, 115, 22, 0.3) 100%
+        );
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          180deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .autocomplete-item {
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 12px;
+        color: var(--text);
+      }
+
+      .autocomplete-item:first-child {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+      }
+
+      .autocomplete-item:last-child {
+        border-bottom: none;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+
+      .autocomplete-item:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(249, 115, 22, 0.1),
+          rgba(249, 115, 22, 0.05)
+        );
+        color: var(--accent);
+        transform: translateX(4px);
+      }
+
+      .autocomplete-place-name {
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.2px;
+      }
+
+      .autocomplete-place-type {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+
       .legend {
         display: flex;
         flex-direction: column;
@@ -940,19 +1097,57 @@
 
       .instructions-modal-content {
         background: linear-gradient(
-          180deg,
+          135deg,
           var(--surface) 0%,
           var(--surface2) 100%
         );
-        border: 1px solid var(--border-light);
-        border-radius: 16px;
-        padding: 24px;
-        max-width: 350px;
+        border: 1.5px solid var(--accent);
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 420px;
         width: 90%;
         max-height: 80vh;
         overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-        animation: slideIn 0.3s ease;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          0 0 40px rgba(249, 115, 22, 0.1);
+        animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .instructions-modal-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .instructions-modal-content::-webkit-scrollbar-track {
+        background: rgba(249, 115, 22, 0.05);
+        border-radius: 10px;
+        margin: 8px 0;
+      }
+      .instructions-modal-content::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          180deg,
+          rgba(249, 115, 22, 0.5) 0%,
+          rgba(249, 115, 22, 0.3) 100%
+        );
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      .instructions-modal-content::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          180deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
       }
 
       .instructions-header {
@@ -1025,6 +1220,124 @@
         padding-top: 4px;
       }
 
+      .error-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .error-modal.active {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .error-modal-content {
+        background: linear-gradient(
+          135deg,
+          var(--surface) 0%,
+          var(--surface2) 100%
+        );
+        border: 2px solid #ef4444;
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          0 0 40px rgba(239, 68, 68, 0.2);
+        animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .error-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .error-modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .error-modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #ef4444;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s;
+      }
+
+      .error-modal-close:hover {
+        transform: scale(1.2);
+      }
+
+      .error-modal-message {
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
+      .error-modal-tips {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 3px solid #ef4444;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      .error-modal-tips strong {
+        color: #ef4444;
+      }
+
+      .error-modal-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .error-modal-btn {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+
+      .error-modal-btn-primary {
+        background: #ef4444;
+        color: #fff;
+      }
+
+      .error-modal-btn-primary:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+      }
+
       .sidebar-overlay {
         display: none;
         position: fixed;
@@ -1076,6 +1389,31 @@
         overflow-y: auto;
         padding: 0 16px 16px;
         -webkit-overflow-scrolling: touch;
+      }
+
+      .panel-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .panel-content::-webkit-scrollbar-track {
+        background: rgba(249, 115, 22, 0.05);
+        border-radius: 10px;
+        margin: 6px 0;
+      }
+      .panel-content::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          180deg,
+          rgba(249, 115, 22, 0.5) 0%,
+          rgba(249, 115, 22, 0.3) 100%
+        );
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      .panel-content::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          180deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
       }
 
       .zoom-controls {
@@ -1767,8 +2105,33 @@
         .sidebar-content {
           flex: 1;
           overflow-y: auto;
+          overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           max-height: calc(85vh - 60px);
+        }
+        .sidebar-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        .sidebar-content::-webkit-scrollbar-track {
+          background: rgba(249, 115, 22, 0.05);
+          border-radius: 10px;
+          margin: 6px 0;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb {
+          background: linear-gradient(
+            180deg,
+            rgba(249, 115, 22, 0.5) 0%,
+            rgba(249, 115, 22, 0.3) 100%
+          );
+          border-radius: 10px;
+          transition: all 0.3s ease;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(
+            180deg,
+            var(--accent) 0%,
+            var(--accent2) 100%
+          );
         }
         .sidebar.active {
           display: flex;
@@ -1892,15 +2255,15 @@
           font-size: 10px;
         }
         .waypoint-item {
-          padding: 6px;
-          gap: 6px;
+          padding: 10px;
+          gap: 8px;
         }
         .waypoint-coords {
-          font-size: 8px;
+          font-size: 10px;
         }
         .waypoint-remove {
-          padding: 3px 6px;
-          font-size: 8px;
+          padding: 6px 10px;
+          font-size: 9px;
         }
         .point-remove {
           width: 18px;
@@ -1992,6 +2355,32 @@
         .sidebar.collapsed {
           transform: none;
         }
+        .sidebar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+          background: rgba(249, 115, 22, 0.05);
+          border-radius: 10px;
+          margin: 8px 0;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+          background: linear-gradient(
+            180deg,
+            var(--accent) 0%,
+            var(--accent2) 100%
+          );
+          border-radius: 10px;
+          border: 2px solid var(--surface);
+          transition: all 0.3s ease;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(
+            180deg,
+            var(--accent2) 0%,
+            var(--accent) 100%
+          );
+          box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+        }
         .sidebar-handle {
           display: none;
         }
@@ -2056,27 +2445,120 @@
           <div class="instructions">
             <div class="step">
               <div class="step-num">1</div>
-              <span>Click map to set <strong>Origin (A)</strong></span>
+              <span
+                ><strong>Set Origin (A):</strong> Search for a location or click
+                on the map to set your starting point.</span
+              >
             </div>
             <div class="step">
               <div class="step-num">2</div>
-              <span>Click map to set <strong>Destination (B)</strong></span>
+              <span
+                ><strong>Set Destination (B):</strong> Search for a location or
+                click on the map to set where you want to go.</span
+              >
             </div>
             <div class="step">
               <div class="step-num">3</div>
-              <span>(Optional) Add <strong>Waypoints</strong></span>
+              <span
+                ><strong>Add Waypoints (Optional):</strong> Click
+                <strong>+ Add Waypoint</strong> to add stops along the
+                way.</span
+              >
             </div>
             <div class="step">
               <div class="step-num">4</div>
-              <span>Click <strong>Calculate Motorcycle Route</strong></span>
+              <span
+                ><strong>Calculate Route:</strong> Click
+                <strong>Calculate Motorcycle Route</strong> to find the best
+                path.</span
+              >
             </div>
             <div class="step">
               <div class="step-num">5</div>
               <span
-                >Watch the <strong>animation</strong> to see the estimated
-                speed</span
+                ><strong>Watch the Route:</strong> Click
+                <strong>▶ Play</strong> to see the motorcycle ride along the
+                route. The color shows traffic: 🟢 Free, 🟡 Moderate, 🔴
+                Heavy.</span
               >
             </div>
+            <hr
+              style="
+                margin: 16px 0;
+                border: none;
+                border-top: 1.5px solid rgba(249, 115, 22, 0.2);
+              "
+            />
+            <div
+              style="
+                padding: 14px;
+                background: linear-gradient(
+                  135deg,
+                  rgba(34, 197, 94, 0.08) 0%,
+                  rgba(34, 197, 94, 0.04) 100%
+                );
+                border-radius: 12px;
+                border: 1px solid rgba(34, 197, 94, 0.2);
+                font-size: 12px;
+                color: var(--text);
+                line-height: 1.7;
+              "
+            >
+              <strong
+                style="
+                  color: #22c55e;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  margin-bottom: 8px;
+                "
+                >💡 Tips</strong
+              >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  color: var(--muted);
+                "
+              >
+                <div>
+                  🔍 <strong>Searching</strong> is more accurate than clicking
+                </div>
+                <div>
+                  🗺️ <strong>Click on map</strong> to quickly add waypoints
+                </div>
+                <div>
+                  🗑️ Click <strong>×</strong> to remove a location and try again
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Modal -->
+      <div class="error-modal" id="error-modal">
+        <div class="error-modal-content">
+          <div class="error-modal-header">
+            <div class="error-modal-title">⚠️ Out of Scope</div>
+            <button class="error-modal-close" onclick="closeErrorModal()">
+              ×
+            </button>
+          </div>
+          <div class="error-modal-message" id="error-modal-message">
+            The location you selected is outside the Camarines Sur service area.
+          </div>
+          <div class="error-modal-tips">
+            <strong>📍 Service Area:</strong> Naga, Camarines Sur
+          </div>
+          <div class="error-modal-buttons">
+            <button
+              class="error-modal-btn error-modal-btn-primary"
+              onclick="closeErrorModal()"
+            >
+              Got It
+            </button>
           </div>
         </div>
       </div>
@@ -2220,15 +2702,48 @@
 
             <div class="sidebar-section">
               <div class="section-label">Route Points</div>
-              <div
-                class="point-row"
-                id="origin-row-desktop"
-                onclick="setClickMode('origin')"
-              >
+
+              <!-- Origin Search & Map Click Combined -->
+              <div class="point-row" id="origin-row-desktop">
                 <div class="point-marker origin">A</div>
                 <div class="point-coords">
-                  <div class="point-label">Origin</div>
-                  <div id="origin-coords-desktop">Click map to set</div>
+                  <div class="point-label">🟢 Origin</div>
+                  <div class="point-input-wrapper">
+                    <input
+                      type="text"
+                      id="origin-search"
+                      placeholder="Search or click to set..."
+                      oninput="handleOriginSearch(this.value)"
+                      onfocus="showOriginSuggestions()"
+                    />
+                    <div
+                      id="origin-suggestions"
+                      class="autocomplete-dropdown"
+                    ></div>
+                  </div>
+                  <div class="point-status" id="origin-status">
+                    <span class="point-status-icon">○</span>
+                    <span id="origin-status-text">Waiting for input</span>
+                  </div>
+                  <button
+                    class="choose-map-btn"
+                    id="origin-choose-map-btn"
+                    onclick="setClickMode('origin')"
+                    style="
+                      background: rgba(34, 197, 94, 0.2);
+                      color: #22c55e;
+                      border: 1px solid rgba(34, 197, 94, 0.4);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-size: 11px;
+                      cursor: pointer;
+                      transition: all 0.2s;
+                      margin-top: 4px;
+                      display: none;
+                    "
+                  >
+                    📍 Choose on Map
+                  </button>
                 </div>
                 <button
                   class="point-remove"
@@ -2239,15 +2754,48 @@
                   ×
                 </button>
               </div>
-              <div
-                class="point-row"
-                id="dest-row-desktop"
-                onclick="setClickMode('dest')"
-              >
+
+              <!-- Destination Search & Map Click Combined -->
+              <div class="point-row" id="dest-row-desktop">
                 <div class="point-marker dest">B</div>
                 <div class="point-coords">
-                  <div class="point-label">Destination</div>
-                  <div id="dest-coords-desktop">Click map to set</div>
+                  <div class="point-label">🔴 Destination</div>
+                  <div class="point-input-wrapper">
+                    <input
+                      type="text"
+                      id="dest-search"
+                      placeholder="Search or click to set..."
+                      oninput="handleDestSearch(this.value)"
+                      onfocus="showDestSuggestions()"
+                    />
+                    <div
+                      id="dest-suggestions"
+                      class="autocomplete-dropdown"
+                    ></div>
+                  </div>
+                  <div class="point-status" id="dest-status">
+                    <span class="point-status-icon">○</span>
+                    <span id="dest-status-text">Waiting for input</span>
+                  </div>
+                  <button
+                    class="choose-map-btn"
+                    id="dest-choose-map-btn"
+                    onclick="setClickMode('dest')"
+                    style="
+                      background: rgba(239, 68, 68, 0.2);
+                      color: #ef4444;
+                      border: 1px solid rgba(239, 68, 68, 0.4);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-size: 11px;
+                      cursor: pointer;
+                      transition: all 0.2s;
+                      margin-top: 4px;
+                      display: none;
+                    "
+                  >
+                    📍 Choose on Map
+                  </button>
                 </div>
                 <button
                   class="point-remove"
@@ -2266,11 +2814,12 @@
                 >
                   Waypoints
                 </div>
+
                 <div id="waypoint-list" class="waypoint-list"></div>
                 <button
                   class="add-waypoint-btn"
                   id="add-waypoint-btn"
-                  onclick="enableWaypointMode()"
+                  onclick="addEmptyWaypoint()"
                 >
                   + Add Waypoint
                 </button>
@@ -2496,42 +3045,6 @@
                     <span class="ds-key">Applied to</span
                     ><span class="ds-val" id="gm-applied">—</span>
                   </div>
-                  <div class="ds-row">
-                    <span class="ds-key">Car time (ref)</span
-                    ><span class="ds-val" id="gm-time">—</span>
-                  </div>
-                  <div class="ds-row">
-                    <span class="ds-key">Car distance</span
-                    ><span class="ds-val" id="gm-dist">—</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              class="sidebar-section"
-              id="comparison-section"
-              style="display: none"
-            >
-              <div class="section-label">vs. Google Maps (Car)</div>
-              <div class="comparison">
-                <div class="comp-row">
-                  <div class="comp-label">
-                    <div class="comp-dot moto"></div>
-                    MotoRoute
-                  </div>
-                  <div class="comp-val" id="comp-moto">—</div>
-                </div>
-                <div class="comp-row">
-                  <div class="comp-label">
-                    <div class="comp-dot gm"></div>
-                    Google Maps
-                  </div>
-                  <div class="comp-val" id="comp-gm">—</div>
-                </div>
-                <div class="comp-row">
-                  <div class="comp-label">⚡ Difference</div>
-                  <div class="comp-val" id="comp-diff">—</div>
                 </div>
               </div>
             </div>
@@ -2606,6 +3119,69 @@
                     B
                   </div>
                   <span>Destination</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div class="section-label">🚦 Traffic Status</div>
+              <div class="legend">
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #22c55e;
+                      border: 2px solid #fff;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 10px;
+                      flex-shrink: 0;
+                    "
+                  >
+                    🏍
+                  </div>
+                  <span>Free Flowing</span>
+                </div>
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #eab308;
+                      border: 2px solid #fff;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 10px;
+                      flex-shrink: 0;
+                    "
+                  >
+                    🏍
+                  </div>
+                  <span>Moderate</span>
+                </div>
+                <div class="legend-item">
+                  <div
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      border-radius: 50%;
+                      background: #ef4444;
+                      border: 2px solid #fff;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 10px;
+                      flex-shrink: 0;
+                    "
+                  >
+                    🏍
+                  </div>
+                  <span>Heavy Congestion</span>
                 </div>
               </div>
             </div>
@@ -2700,6 +3276,8 @@
       let map, originMarker, destMarker, routeLayer, lsLayer, boundaryLayer;
       let originCoords = null,
         destCoords = null;
+      let originFromSearch = false,
+        destFromSearch = false;
       let waypoints = [];
       let waypointMarkers = [];
       let pendingWaypoint = false;
@@ -2766,6 +3344,427 @@
           iconAnchor: [16, 16],
         });
       }
+
+      // Store search suggestions and timeouts for each waypoint
+      let waypointSuggestionsList = {}; // { waypointIndex: suggestions[] }
+      let waypointSearchTimeouts = {}; // { waypointIndex: timeout }
+
+      // Geocoding & Place Search Functions
+      let originSuggestions = [];
+      let destSuggestions = [];
+      let waypointSuggestions = [];
+      let originSearchTimeout = null;
+      let destSearchTimeout = null;
+      let waypointSearchTimeout = null;
+
+      async function geocodePlace(query, boundingBox = null) {
+        try {
+          // Call backend endpoint (avoids CORS issues)
+          const backendUrl = `/api/search-places?q=${encodeURIComponent(query)}`;
+          console.log("Searching via backend:", backendUrl);
+
+          const response = await fetch(backendUrl);
+
+          if (!response.ok) {
+            console.error("Backend search error:", response.status);
+            return [];
+          }
+
+          const data = await response.json();
+          console.log("Search results for '" + query + "':", data.results);
+          return data.results || [];
+        } catch (error) {
+          console.error("Geocoding error:", error);
+          return [];
+        }
+      }
+
+      function displaySuggestions(suggestions, containerSelector, type) {
+        const container = document.querySelector(containerSelector);
+        if (!container) {
+          console.error("Container not found:", containerSelector);
+          return;
+        }
+
+        if (suggestions.length === 0) {
+          container.innerHTML =
+            '<div class="autocomplete-item" style="color: var(--muted); padding: 10px;">No results found</div>';
+          container.classList.add("active");
+          return;
+        }
+
+        container.innerHTML = suggestions
+          .map(
+            (place, idx) => `
+          <div class="autocomplete-item" onclick="selectPlace('${type}', ${idx})">
+            <div class="autocomplete-place-name">${(place.display_name || place.name || "Unknown").split(",")[0]}</div>
+            <div class="autocomplete-place-type">${(place.display_name || "").split(",").slice(1, 3).join(", ") || place.type}</div>
+          </div>
+        `,
+          )
+          .join("");
+        container.classList.add("active");
+      }
+
+      async function handleOriginSearch(query) {
+        // Clear previous timeout
+        clearTimeout(originSearchTimeout);
+
+        if (!query.trim()) {
+          document
+            .getElementById("origin-suggestions")
+            .classList.remove("active");
+          return;
+        }
+
+        // Require at least 2 characters
+        if (query.trim().length < 2) {
+          document
+            .getElementById("origin-suggestions")
+            .classList.remove("active");
+          return;
+        }
+
+        // Debounce: wait 300ms before searching
+        originSearchTimeout = setTimeout(async () => {
+          console.log("Searching for origin:", query);
+          originSuggestions = await geocodePlace(query);
+          displaySuggestions(
+            originSuggestions,
+            "#origin-suggestions",
+            "origin",
+          );
+        }, 300);
+      }
+
+      async function handleDestSearch(query) {
+        // Clear previous timeout
+        clearTimeout(destSearchTimeout);
+
+        if (!query.trim()) {
+          document
+            .getElementById("dest-suggestions")
+            .classList.remove("active");
+          return;
+        }
+
+        // Require at least 2 characters
+        if (query.trim().length < 2) {
+          document
+            .getElementById("dest-suggestions")
+            .classList.remove("active");
+          return;
+        }
+
+        // Debounce: wait 300ms before searching
+        destSearchTimeout = setTimeout(async () => {
+          console.log("Searching for destination:", query);
+          destSuggestions = await geocodePlace(query);
+          displaySuggestions(destSuggestions, "#dest-suggestions", "dest");
+        }, 300);
+      }
+
+      function showOriginSuggestions() {
+        if (originSuggestions.length > 0) {
+          document.getElementById("origin-suggestions").classList.add("active");
+        }
+      }
+
+      function showDestSuggestions() {
+        if (destSuggestions.length > 0) {
+          document.getElementById("dest-suggestions").classList.add("active");
+        }
+      }
+
+      async function handleIndividualWaypointSearch(waypointIdx, query) {
+        // Clear previous timeout for this waypoint
+        if (waypointSearchTimeouts[waypointIdx]) {
+          clearTimeout(waypointSearchTimeouts[waypointIdx]);
+        }
+
+        if (!query.trim()) {
+          document
+            .getElementById(`waypoint-suggestions-${waypointIdx}`)
+            .classList.remove("active");
+          return;
+        }
+
+        // Require at least 2 characters
+        if (query.trim().length < 2) {
+          document
+            .getElementById(`waypoint-suggestions-${waypointIdx}`)
+            .classList.remove("active");
+          return;
+        }
+
+        // Debounce: wait 300ms before searching
+        waypointSearchTimeouts[waypointIdx] = setTimeout(async () => {
+          console.log("Searching for waypoint", waypointIdx, ":", query);
+          const suggestions = await geocodePlace(query);
+          waypointSuggestionsList[waypointIdx] = suggestions;
+          displayIndividualWaypointSuggestions(suggestions, waypointIdx);
+        }, 300);
+      }
+
+      function showIndividualWaypointSuggestions(waypointIdx) {
+        if (
+          waypointSuggestionsList[waypointIdx] &&
+          waypointSuggestionsList[waypointIdx].length > 0
+        ) {
+          document
+            .getElementById(`waypoint-suggestions-${waypointIdx}`)
+            .classList.add("active");
+        }
+      }
+
+      function displayIndividualWaypointSuggestions(suggestions, waypointIdx) {
+        const container = document.getElementById(
+          `waypoint-suggestions-${waypointIdx}`,
+        );
+        container.innerHTML = "";
+        if (suggestions.length === 0) {
+          container.innerHTML =
+            '<div style="padding: 8px 12px; color: var(--muted); font-size: 11px;">No results found</div>';
+        } else {
+          suggestions.forEach((place, idx) => {
+            const item = document.createElement("div");
+            item.className = "autocomplete-item";
+            item.innerHTML = `
+              <div class="autocomplete-place-name">${(place.display_name || place.name || "Location").split(",")[0]}</div>
+              <div class="autocomplete-place-type">${place.display_name ? place.display_name.split(",").slice(1, 3).join(",") : ""}</div>
+            `;
+            item.onclick = () => selectIndividualWaypoint(waypointIdx, idx);
+            container.appendChild(item);
+          });
+        }
+        container.classList.add("active");
+      }
+
+      function selectIndividualWaypoint(waypointIdx, suggestionIdx) {
+        const suggestions = waypointSuggestionsList[waypointIdx];
+        if (!suggestions || !suggestions[suggestionIdx]) {
+          console.error(
+            "Waypoint suggestion not found",
+            waypointIdx,
+            suggestionIdx,
+          );
+          return;
+        }
+
+        const place = suggestions[suggestionIdx];
+        const lat = parseFloat(place.lat);
+        const lng = parseFloat(place.lon);
+        const placeName = (
+          place.display_name ||
+          place.name ||
+          "Location"
+        ).split(",")[0];
+
+        // Update the waypoint
+        waypoints[waypointIdx] = { lat, lng };
+
+        // Update marker on map
+        if (waypointMarkers[waypointIdx]) {
+          map.removeLayer(waypointMarkers[waypointIdx]);
+        }
+        const marker = L.marker([lat, lng], {
+          icon: makeIcon("W" + (waypointIdx + 1), "#3b82f6"),
+        }).addTo(map);
+        waypointMarkers[waypointIdx] = marker;
+
+        // Clear search input and close dropdown
+        document.getElementById(`waypoint-search-${waypointIdx}`).value =
+          placeName;
+        document
+          .getElementById(`waypoint-suggestions-${waypointIdx}`)
+          .classList.remove("active");
+
+        console.log("Updated waypoint", waypointIdx, "to", placeName);
+        updateCalcButton();
+      }
+
+      // Bounds for Camarines Sur study area (north, south, east, west)
+      const STUDY_AREA_BOUNDS = {
+        north: 13.85,
+        south: 13.45,
+        east: 123.4,
+        west: 123.15,
+      };
+
+      function isLocationInScope(lat, lng) {
+        return (
+          lat >= STUDY_AREA_BOUNDS.south &&
+          lat <= STUDY_AREA_BOUNDS.north &&
+          lng >= STUDY_AREA_BOUNDS.west &&
+          lng <= STUDY_AREA_BOUNDS.east
+        );
+      }
+
+      function showOutOfScopeError(locationType) {
+        const modal = document.getElementById("error-modal");
+        const message = document.getElementById("error-modal-message");
+        message.textContent = `The ${locationType} you selected is outside the service area. Please search for a location within the scope.`;
+        modal.classList.add("active");
+      }
+
+      function openErrorModal() {
+        document.getElementById("error-modal").classList.add("active");
+      }
+
+      function closeErrorModal() {
+        document.getElementById("error-modal").classList.remove("active");
+      }
+
+      // Close error modal when clicking outside
+      document.addEventListener("DOMContentLoaded", function () {
+        const errorModal = document.getElementById("error-modal");
+        if (errorModal) {
+          errorModal.addEventListener("click", function (e) {
+            if (e.target.id === "error-modal") {
+              closeErrorModal();
+            }
+          });
+        }
+      });
+
+      function selectPlace(type, idx) {
+        let suggestions =
+          type === "origin"
+            ? originSuggestions
+            : type === "dest"
+              ? destSuggestions
+              : waypointSuggestions;
+        let place = suggestions[idx];
+
+        if (!place) {
+          console.error("Place not found at index", idx);
+          return;
+        }
+
+        const lat = parseFloat(place.lat);
+        const lng = parseFloat(place.lon);
+        const placeName = (
+          place.display_name ||
+          place.name ||
+          "Location"
+        ).split(",")[0];
+
+        console.log("Selected place:", placeName, lat, lng);
+
+        // Check if location is within the study area
+        if (!isLocationInScope(lat, lng)) {
+          showOutOfScopeError(
+            type === "origin"
+              ? "Origin"
+              : type === "dest"
+                ? "Destination"
+                : "Waypoint",
+          );
+          return;
+        }
+
+        if (type === "origin") {
+          originCoords = { lat, lng };
+          document.getElementById("origin-search").value = placeName;
+          document
+            .getElementById("origin-suggestions")
+            .classList.remove("active");
+          updateOriginDisplay(lat, lng, placeName);
+          updateCalcButton();
+          setClickMode("dest");
+        } else if (type === "dest") {
+          destCoords = { lat, lng };
+          document.getElementById("dest-search").value = placeName;
+          document
+            .getElementById("dest-suggestions")
+            .classList.remove("active");
+          updateDestDisplay(lat, lng, placeName);
+          updateCalcButton();
+          clickMode = null; // Reset mode so next map click uses intelligent detection
+        }
+      }
+
+      function updateOriginDisplay(lat, lng, placeName) {
+        // Save coordinates
+        originCoords = { lat, lng };
+        originFromSearch = true; // Mark as set via search, disable map override
+
+        document.getElementById("origin-remove-desktop").style.display =
+          "block";
+        document.getElementById("origin-row-desktop").classList.add("active");
+
+        // Update status indicator with coordinates
+        const statusEl = document.getElementById("origin-status");
+        statusEl.classList.add("filled");
+        statusEl.innerHTML = `✓ ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+        const originMarker = L.marker([lat, lng], {
+          icon: makeIcon("A", "#22c55e"),
+        }).addTo(map);
+        if (window.originMapMarker) map.removeLayer(window.originMapMarker);
+        window.originMapMarker = originMarker;
+        map.flyTo([lat, lng], 15);
+      }
+
+      function updateDestDisplay(lat, lng, placeName) {
+        // Save coordinates
+        destCoords = { lat, lng };
+        destFromSearch = true; // Mark as set via search, disable map override
+
+        document.getElementById("dest-remove-desktop").style.display = "block";
+        document.getElementById("dest-row-desktop").classList.add("active");
+
+        // Update status indicator with coordinates
+        const statusEl = document.getElementById("dest-status");
+        statusEl.classList.add("filled");
+        statusEl.innerHTML = `✓ ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+        const destMarker = L.marker([lat, lng], {
+          icon: makeIcon("B", "#ef4444"),
+        }).addTo(map);
+        if (window.destMapMarker) map.removeLayer(window.destMapMarker);
+        window.destMapMarker = destMarker;
+        map.flyTo([lat, lng], 15);
+
+        // Show waypoints container (same as manual click)
+        document.getElementById("waypoints-container").style.display = "block";
+      }
+
+      // Hide suggestions when clicking outside
+      document.addEventListener("click", (e) => {
+        if (
+          !e.target.closest("#origin-search") &&
+          !e.target.closest("#origin-suggestions")
+        ) {
+          document
+            .getElementById("origin-suggestions")
+            .classList.remove("active");
+        }
+        if (
+          !e.target.closest("#dest-search") &&
+          !e.target.closest("#dest-suggestions")
+        ) {
+          document
+            .getElementById("dest-suggestions")
+            .classList.remove("active");
+        }
+
+        // Close all waypoint suggestion dropdowns that aren't being interacted with
+        waypoints.forEach((_, idx) => {
+          const searchInput = document.getElementById(`waypoint-search-${idx}`);
+          const suggestionsBox = document.getElementById(
+            `waypoint-suggestions-${idx}`,
+          );
+          if (searchInput && suggestionsBox) {
+            if (
+              !e.target.closest(`#waypoint-search-${idx}`) &&
+              !e.target.closest(`#waypoint-suggestions-${idx}`)
+            ) {
+              suggestionsBox.classList.remove("active");
+            }
+          }
+        });
+      });
 
       function setClickMode(mode) {
         clickMode = mode;
@@ -2873,8 +3872,23 @@
         });
       }
 
-      setClickMode("origin");
+      // Start with no mode set - let user choose by clicking rows or map
+      clickMode = null;
       displayRecentRoutes();
+
+      // Click handlers for origin/destination rows to enable map mode
+      const originRow = document.getElementById("origin-row-desktop");
+      const destRow = document.getElementById("dest-row-desktop");
+
+      originRow?.addEventListener("click", (e) => {
+        if (e.target.closest("#origin-search")) return; // Don't trigger if clicking input
+        setClickMode("origin");
+      });
+
+      destRow?.addEventListener("click", (e) => {
+        if (e.target.closest("#dest-search")) return; // Don't trigger if clicking input
+        setClickMode("dest");
+      });
 
       // Handle mobile orientation change
       window.addEventListener("orientationchange", () => {
@@ -2889,98 +3903,173 @@
         // Close sidebar on mobile when clicking map
         closeSidebar();
 
-        // Check if point is within network bounds
-        if (!isPointInBounds(lat, lng)) {
-          document.getElementById("error-msg").textContent =
-            "⚠ Click location is outside the available data coverage area";
-          document.getElementById("error-msg").style.display = "block";
-          setTimeout(() => {
-            document.getElementById("error-msg").style.display = "none";
-          }, 3000);
+        // Check if point is within service area bounds
+        if (!isLocationInScope(lat, lng)) {
+          showOutOfScopeError("location");
           return;
         }
 
-        if (clickMode === "origin") {
+        // Check if point is within network bounds
+        if (!isPointInBounds(lat, lng)) {
+          showOutOfScopeError("location");
+          return;
+        }
+
+        // Intelligent mode detection: if no explicit mode set, fill empty slots
+        let modeToFill = clickMode;
+        if (!modeToFill) {
+          // Auto-determine based on what's empty
+          // Skip origin if it was set via search
+          if (!originCoords && !originFromSearch) {
+            modeToFill = "origin";
+          } else if (!destCoords && !destFromSearch) {
+            modeToFill = "dest";
+          } else {
+            modeToFill = "waypoint"; // Both filled, add waypoint
+          }
+        }
+
+        if (modeToFill === "origin") {
           originCoords = { lat, lng };
+          originFromSearch = false; // Mark as set via map click, allow override
           if (originMarker) map.removeLayer(originMarker);
+          if (window.originMapMarker) map.removeLayer(window.originMapMarker);
           originMarker = L.marker([lat, lng], {
             icon: makeIcon("A", "#22c55e"),
           }).addTo(map);
-          const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-          document.getElementById("origin-coords").textContent = coordText;
-          document.getElementById("origin-coords-desktop").textContent =
-            coordText;
-          document.getElementById("origin-remove").style.display = "flex";
+          window.originMapMarker = originMarker;
           document.getElementById("origin-remove-desktop").style.display =
             "flex";
-          setClickMode("dest");
-        } else if (clickMode === "dest") {
+          document.getElementById("origin-choose-map-btn").style.display =
+            "block";
+          document.getElementById("origin-search").value = ""; // Clear search
+          document
+            .getElementById("origin-suggestions")
+            .classList.remove("active");
+          document.getElementById("origin-row-desktop").classList.add("active");
+
+          // Update status indicator with coordinates
+          const originStatus = document.getElementById("origin-status");
+          originStatus.classList.add("filled");
+          originStatus.innerHTML = `✓ ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+          // Auto-advance to destination if origin was just filled (unless already set via search)
+          setClickMode(!destCoords && !destFromSearch ? "dest" : null);
+        } else if (modeToFill === "dest") {
           destCoords = { lat, lng };
+          destFromSearch = false; // Mark as set via map click, allow override
           if (destMarker) map.removeLayer(destMarker);
+          if (window.destMapMarker) map.removeLayer(window.destMapMarker);
           destMarker = L.marker([lat, lng], {
             icon: makeIcon("B", "#ef4444"),
           }).addTo(map);
-          const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-          document.getElementById("dest-coords").textContent = coordText;
-          document.getElementById("dest-coords-desktop").textContent =
-            coordText;
-          document.getElementById("dest-remove").style.display = "flex";
+          window.destMapMarker = destMarker;
           document.getElementById("dest-remove-desktop").style.display = "flex";
+          document.getElementById("dest-choose-map-btn").style.display =
+            "block";
+          document.getElementById("dest-search").value = ""; // Clear search
+          document
+            .getElementById("dest-suggestions")
+            .classList.remove("active");
           document.getElementById("click-banner").style.display = "none";
-          document.getElementById("dest-row").classList.remove("active");
+          document.getElementById("dest-row-desktop").classList.add("active");
           document.getElementById("waypoints-container").style.display =
             "block";
+
+          // Update status indicator with coordinates
+          const destStatus = document.getElementById("dest-status");
+          destStatus.classList.add("filled");
+          destStatus.innerHTML = `✓ ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
           clickMode = null;
-        } else if (clickMode === "waypoint") {
-          addWaypoint({ lat, lng });
+        } else if (modeToFill === "waypoint") {
+          // Find first empty waypoint
+          const idx = waypoints.findIndex((wp) => !wp.lat || !wp.lng);
+          if (idx !== -1) {
+            setWaypointLocation(idx, lat, lng);
+          }
           document.getElementById("click-banner").style.display = "none";
           clickMode = null;
         }
         updateCalcButton();
       });
 
-      function addWaypoint(coords) {
-        waypoints.push(coords);
-        const idx = waypoints.length;
+      function addEmptyWaypoint() {
+        // Add a new empty waypoint (no lat/lng yet)
+        waypoints.push({ lat: null, lng: null });
+        waypointMarkers.push(null);
+        updateWaypointList();
+      }
 
-        const marker = L.marker([coords.lat, coords.lng], {
-          icon: makeIcon("W" + idx, "#3b82f6"),
+      function setWaypointLocation(idx, lat, lng) {
+        waypoints[idx] = { lat, lng };
+        // Remove old marker if exists
+        if (waypointMarkers[idx]) {
+          map.removeLayer(waypointMarkers[idx]);
+        }
+        const marker = L.marker([lat, lng], {
+          icon: makeIcon("W" + (idx + 1), "#3b82f6"),
         }).addTo(map);
-        waypointMarkers.push(marker);
-
-        pendingWaypoint = false;
+        waypointMarkers[idx] = marker;
         updateWaypointList();
       }
 
       function removeOrigin(e) {
         e.stopPropagation();
         originCoords = null;
+        originFromSearch = false;
         if (originMarker) {
           map.removeLayer(originMarker);
           originMarker = null;
         }
-        document.getElementById("origin-coords").textContent =
-          "Click map to set";
-        document.getElementById("origin-coords-desktop").textContent =
-          "Click map to set";
-        document.getElementById("origin-remove").style.display = "none";
+        if (window.originMapMarker) {
+          map.removeLayer(window.originMapMarker);
+          window.originMapMarker = null;
+        }
+        document.getElementById("origin-search").value = "";
+        document
+          .getElementById("origin-suggestions")
+          .classList.remove("active");
         document.getElementById("origin-remove-desktop").style.display = "none";
+        document.getElementById("origin-choose-map-btn").style.display = "none";
+        document
+          .getElementById("origin-row-desktop")
+          .classList.remove("active");
+
+        // Reset status indicator
+        const statusEl = document.getElementById("origin-status");
+        statusEl.classList.remove("filled");
+        statusEl.innerHTML =
+          '<span class="point-status-icon">○</span><span>Waiting for input</span>';
+
         updateCalcButton();
       }
 
       function removeDest(e) {
         e.stopPropagation();
         destCoords = null;
+        destFromSearch = false;
         if (destMarker) {
           map.removeLayer(destMarker);
           destMarker = null;
         }
-        document.getElementById("dest-coords").textContent = "Click map to set";
-        document.getElementById("dest-coords-desktop").textContent =
-          "Click map to set";
-        document.getElementById("dest-remove").style.display = "none";
+        if (window.destMapMarker) {
+          map.removeLayer(window.destMapMarker);
+          window.destMapMarker = null;
+        }
+        document.getElementById("dest-search").value = "";
+        document.getElementById("dest-suggestions").classList.remove("active");
         document.getElementById("dest-remove-desktop").style.display = "none";
+        document.getElementById("dest-choose-map-btn").style.display = "none";
+        document.getElementById("dest-row-desktop").classList.remove("active");
         document.getElementById("waypoints-container").style.display = "none";
+
+        // Reset status indicator
+        const statusEl = document.getElementById("dest-status");
+        statusEl.classList.remove("filled");
+        statusEl.innerHTML =
+          '<span class="point-status-icon">○</span><span>Waiting for input</span>';
+
         updateCalcButton();
       }
 
@@ -3003,32 +4092,32 @@
           const label = "W" + (idx + 1);
           const item = document.createElement("div");
           item.className = "waypoint-item";
+
+          // Check if waypoint has coordinates set
+          const isSet = wp.lat !== null && wp.lng !== null;
+          const coordsText = isSet
+            ? `${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}`
+            : "Not set - search or click map";
+          const coordsStyle = isSet
+            ? "color: var(--muted);"
+            : "color: #ef4444; font-style: italic;";
+
           item.innerHTML = `
-            <div class="point-marker waypoint">${label}</div>
-            <span class="waypoint-coords">${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}</span>
-            <button class="waypoint-remove" onclick="removeWaypoint(${idx})">Remove</button>
+            <div style="display: flex; align-items: stretch; gap: 12px; padding: 16px; background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-radius: 14px; border: 1.5px solid var(--border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; position: relative;">
+              <div class="point-marker waypoint" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); flex-shrink: 0;">${label}</div>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                <div style="font-size: 12px; padding: 4px 0; ${coordsStyle}">
+                  ${coordsText}
+                </div>
+              </div>
+              <button class="waypoint-remove" onclick="removeWaypoint(${idx})" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; min-width: 70px; flex-shrink: 0;">Remove</button>
+            </div>
           `;
           container.appendChild(item);
 
           const mobileItem = item.cloneNode(true);
           mobileContainer.appendChild(mobileItem);
         });
-
-        if (pendingWaypoint) {
-          const nextIdx = waypoints.length + 1;
-          const item = document.createElement("div");
-          item.className = "waypoint-item";
-          item.style.opacity = "0.6";
-          item.innerHTML = `
-            <div class="point-marker waypoint">W${nextIdx}</div>
-            <span class="waypoint-coords" style="color: var(--text); font-style: italic;">Click map to add...</span>
-            <button class="waypoint-remove" onclick="pendingWaypoint = false; updateWaypointList();" style="background: rgba(107, 114, 128, 0.5);">Cancel</button>
-          `;
-          container.appendChild(item);
-
-          const mobileItem = item.cloneNode(true);
-          mobileContainer.appendChild(mobileItem);
-        }
       }
 
       function selectAlgo(algo, el) {
@@ -3043,15 +4132,19 @@
         const isDisabled = !(originCoords && destCoords);
         const btn = document.getElementById("calc-btn");
         const btnMobile = document.getElementById("calc-btn-mobile");
+
+        // Only disable Calculate button, not waypoint button
+        if (btn) btn.disabled = isDisabled;
+        if (btnMobile) btnMobile.disabled = isDisabled;
+
+        // Waypoint button should be enabled if origin is set
+        const waypointEnabled = !!originCoords;
         const waypointBtn = document.getElementById("add-waypoint-btn");
         const waypointBtnMobile = document.getElementById(
           "add-waypoint-btn-mobile",
         );
-
-        if (btn) btn.disabled = isDisabled;
-        if (btnMobile) btnMobile.disabled = isDisabled;
-        if (waypointBtn) waypointBtn.disabled = isDisabled;
-        if (waypointBtnMobile) waypointBtnMobile.disabled = isDisabled;
+        if (waypointBtn) waypointBtn.disabled = !waypointEnabled;
+        if (waypointBtnMobile) waypointBtnMobile.disabled = !waypointEnabled;
       }
 
       function saveRoute(routeData) {
@@ -3321,7 +4414,27 @@
             laneSpaceSegments: data.lane_split_segments || [],
             totalDistance: data.stats.distance_km,
             totalTime: data.stats.time_min * 60, // Convert to seconds
+            congestionColor: "#22c55e", // Default to green
           };
+
+          // Fetch traffic congestion level
+          fetch(
+            `/api/traffic-congestion?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lng}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lng}`,
+          )
+            .then((r) => r.json())
+            .then((trafficData) => {
+              if (trafficData.congestion && trafficData.color_map) {
+                currentRoute.congestionColor =
+                  trafficData.color_map[trafficData.congestion];
+                console.log(
+                  "Traffic congestion:",
+                  trafficData.congestion,
+                  "Color:",
+                  currentRoute.congestionColor,
+                );
+              }
+            })
+            .catch((e) => console.log("Traffic check skipped:", e));
 
           // Show animation section and prepare
           document.getElementById("animation-section").style.display = "block";
@@ -3370,12 +4483,6 @@
                 gm.traffic_speed_kph + " kph (live)";
               document.getElementById("gm-applied").textContent =
                 osm.edges.toLocaleString() + " segments";
-              document.getElementById("gm-time").textContent = gm.comparison
-                ? gm.comparison.duration_min + " min"
-                : "—";
-              document.getElementById("gm-dist").textContent = gm.comparison
-                ? gm.comparison.distance_km + " km"
-                : "—";
             } else {
               gmDot.className = "ds-dot inactive";
               gmBadge.textContent = "UNAVAILABLE";
@@ -3383,29 +4490,8 @@
               document.getElementById("gm-traffic-speed").textContent =
                 "Using OSM estimates";
               document.getElementById("gm-applied").textContent = "N/A";
-              document.getElementById("gm-time").textContent = "N/A";
-              document.getElementById("gm-dist").textContent = "N/A";
             }
             document.getElementById("datasource-section").style.display =
-              "block";
-          }
-
-          if (data.google_maps_comparison) {
-            const gm = data.google_maps_comparison;
-            const diff = s.time_min - gm.duration_min;
-            document.getElementById("comp-moto").textContent =
-              `${s.time_min} min`;
-            document.getElementById("comp-gm").textContent =
-              `${gm.duration_min} min`;
-            const diffEl = document.getElementById("comp-diff");
-            if (diff < 0) {
-              diffEl.textContent = `${Math.abs(diff).toFixed(1)} min faster`;
-              diffEl.className = "comp-val better";
-            } else {
-              diffEl.textContent = `${diff.toFixed(1)} min slower`;
-              diffEl.className = "comp-val worse";
-            }
-            document.getElementById("comparison-section").style.display =
               "block";
           }
         } catch (err) {
@@ -3429,6 +4515,8 @@
         if (motorcycleMarker) map.removeLayer(motorcycleMarker);
         if (originMarker) map.removeLayer(originMarker);
         if (destMarker) map.removeLayer(destMarker);
+        if (window.originMapMarker) map.removeLayer(window.originMapMarker);
+        if (window.destMapMarker) map.removeLayer(window.destMapMarker);
 
         // Clear route data
         currentRoute = null;
@@ -3442,7 +4530,6 @@
         // Hide results and animation sections
         document.getElementById("animation-section").style.display = "none";
         document.getElementById("results-section").style.display = "none";
-        document.getElementById("comparison-section").style.display = "none";
         document.getElementById("datasource-section").style.display = "none";
 
         // Clear error messages
@@ -3451,26 +4538,47 @@
         // Reset location markers
         originCoords = null;
         destCoords = null;
+        originFromSearch = false;
+        destFromSearch = false;
         waypoints = [];
         waypointMarkers.forEach((m) => map.removeLayer(m));
         waypointMarkers = [];
 
-        // Update UI
-        document.getElementById("origin-coords").textContent =
-          "Click map to set";
-        document.getElementById("dest-coords").textContent = "Click map to set";
-        document.getElementById("origin-coords-desktop").textContent =
-          "Click map to set";
-        document.getElementById("dest-coords-desktop").textContent =
-          "Click map to set";
-        document.getElementById("origin-remove").style.display = "none";
-        document.getElementById("dest-remove").style.display = "none";
+        // Clear search inputs and status indicators
+        document.getElementById("origin-search").value = "";
+        document
+          .getElementById("origin-suggestions")
+          .classList.remove("active");
+        document.getElementById("dest-search").value = "";
+        document.getElementById("dest-suggestions").classList.remove("active");
+
+        // Reset UI elements
         document.getElementById("origin-remove-desktop").style.display = "none";
+        document.getElementById("origin-choose-map-btn").style.display = "none";
         document.getElementById("dest-remove-desktop").style.display = "none";
-        document.getElementById("origin-row").classList.remove("active");
-        document.getElementById("dest-row").classList.remove("active");
+        document.getElementById("dest-choose-map-btn").style.display = "none";
+        document
+          .getElementById("origin-row-desktop")
+          .classList.remove("active");
+        document.getElementById("dest-row-desktop").classList.remove("active");
+
+        // Reset status indicators
+        const originStatus = document.getElementById("origin-status");
+        originStatus.classList.remove("filled");
+        originStatus.innerHTML =
+          '<span class="point-status-icon">○</span><span>Waiting for input</span>';
+
+        const destStatus = document.getElementById("dest-status");
+        destStatus.classList.remove("filled");
+        destStatus.innerHTML =
+          '<span class="point-status-icon">○</span><span>Waiting for input</span>';
+
         document.getElementById("waypoint-list").innerHTML = "";
         document.getElementById("waypoints-container").style.display = "none";
+
+        // Clear window marker references
+        window.originMapMarker = null;
+        window.destMapMarker = null;
 
         // Reset calculate button
         updateCalcButton();
@@ -3543,7 +4651,13 @@
         return false;
       }
 
-      function createMotorcycleMarker(lat, lng, isLaneSplitting, speed = 0) {
+      function createMotorcycleMarker(
+        lat,
+        lng,
+        isLaneSplitting,
+        speed = 0,
+        congestionColor = "#22c55e",
+      ) {
         const offsetLng = isLaneSplitting ? 0.00005 : 0;
 
         const html = `
@@ -3560,7 +4674,7 @@
               padding: 2px 6px;
               font-size: 11px;
               font-weight: 700;
-              color: #f97316;
+              color: ${congestionColor};
               font-family: 'Space Mono', monospace;
               white-space: nowrap;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
@@ -3568,17 +4682,17 @@
             <div style="
               width: 28px;
               height: 28px;
-              background: linear-gradient(135deg, ${isLaneSplitting ? "#f97316 0%, #fb923c" : "#3b82f6 0%, #60a5fa"} 100%);
+              background: linear-gradient(135deg, ${congestionColor} 0%, ${congestionColor}dd 100%);
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 16px;
-              box-shadow: 0 4px 12px rgba(${isLaneSplitting ? "249, 115, 22" : "59, 130, 246"}, 0.5);
+              box-shadow: 0 4px 12px ${congestionColor}80;
               border: 2px solid white;
               transform: ${isLaneSplitting ? "rotate(15deg)" : "rotate(0deg)"};
               transition: all 0.3s ease;
-            " title="${isLaneSplitting ? "🏍 Lane Splitting" : "🏍 Normal Route"}">
+            " title="${isLaneSplitting ? "🏍 Lane Splitting" : "🏍 Normal Route"} - Traffic: ${congestionColor === "#22c55e" ? "Green 🟢" : congestionColor === "#eab308" ? "Yellow 🟡" : "Red 🔴"}">
               🏍
             </div>
           </div>
@@ -3616,7 +4730,14 @@
           ? Math.round(baseSpeed * 1.2)
           : Math.round(baseSpeed);
 
-        createMotorcycleMarker(pos[0], pos[1], onLaneSplit, currentSpeed);
+        // Use congestion color (changes motorcycle icon color based on traffic)
+        createMotorcycleMarker(
+          pos[0],
+          pos[1],
+          onLaneSplit,
+          currentSpeed,
+          currentRoute.congestionColor,
+        );
 
         // Update status display
         const statusEl = document.getElementById("status-value");

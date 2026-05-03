@@ -26,18 +26,18 @@ MULTIPLE_STUDY_AREAS = [
 ]
 MULTIPLE_NETWORK_FILE = "data/osm/ocampo_tigaon_goa_network.graphml"
 
-# Road Speed Configuration (km/h)
+# Road Speed Configuration (km/h) - Motorcycle optimized speeds (+20 km/h faster than car defaults)
 ROAD_SPEEDS = {
-    "motorway": 100,
-    "trunk": 90,
-    "primary": 80,
-    "secondary": 70,
-    "tertiary": 60,
-    "unclassified": 50,
-    "residential": 40,
-    "service": 30,
-    "living_street": 30,  # Minimum speed on local streets
-    "default": 30  # Fallback minimum speed
+    "motorway": 120,
+    "trunk": 110,
+    "primary": 100,
+    "secondary": 90,
+    "tertiary": 80,
+    "unclassified": 70,
+    "residential": 60,
+    "service": 50,
+    "living_street": 50,  # Minimum speed on local streets
+    "default": 50  # Fallback minimum speed
 }
 
 # Lane Splitting Configuration
